@@ -2,9 +2,11 @@ import time
 import pyupbit
 import datetime
 import requests
+import data.apiKey
 
-access = "your-access"
-secret = "your-secret"
+
+access = data.apiKey.access 
+secret = data.apiKey.secret 
 myToken = "xoxb-your-token"
 
 

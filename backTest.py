@@ -11,8 +11,8 @@ df['range'] = (df['high'] - df['low']) * 0.5
 df['target'] = df['open'] + df['range'].shift(1)
 
 
-# 수수료
-fee = 0.05
+# 수수료 (0.05%)
+fee = 0.0005
 
 # ror(수익률), np.where(조건문, Ture 일때 값, False 일때 값)
 df['ror'] = np.where(df['high'] > df['target'],

@@ -1,9 +1,11 @@
 import time
 import pyupbit
 import datetime
+import data.apiKey
 
-access = "your-access"
-secret = "your-secret"
+
+access = data.apiKey.access 
+secret = data.apiKey.secret 
 
 
 def get_target_price(ticker, k):
@@ -58,7 +60,7 @@ while True:
         else:
             btc = get_balance("BTC")
             if btc > 0.00008:
-                upbit.sell_market_order("KRW-BTC", btc * 0.9995)
+                upbit.sell_market_order("KRW-BTC", btc * 0.9995)  # 수수료 (0.05%) 제외
         time.sleep(1)
     except Exception as e:
         print(e)

@@ -3,7 +3,14 @@
 ## introduce source
 
 backTest.py : 백테스팅
+
 bestK.py : optimal한 k값 찾기
+
+autoTradeBitcoin.py: 비트코인 자동매매
+
+autoTradeBitcoinWithMA.py: 상승장 투자전략 (이동평균선 이상일때만 거래)
+
+autoTradeBitcoinWithSlack.py: 슬랙 메시지 알림 포함
 
 ## 참고 문서
 

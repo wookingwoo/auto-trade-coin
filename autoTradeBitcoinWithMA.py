@@ -1,9 +1,13 @@
 import time
 import pyupbit
 import datetime
+import data.apiKey
 
-access = "your-access"
-secret = "your-secret"
+
+access = data.apiKey.access 
+secret = data.apiKey.secret 
+
+K = 0.7
 
 
 def get_target_price(ticker, k):
@@ -56,7 +60,7 @@ while True:
 
         # 09시와 다음날 08시59분50초 사이일때
         if start_time < now < end_time - datetime.timedelta(seconds=10):
-            target_price = get_target_price("KRW-BTC", 0.5)
+            target_price = get_target_price("KRW-BTC", K)
             ma15 = get_ma15("KRW-BTC")
             current_price = get_current_price("KRW-BTC")
             if target_price < current_price and ma15 < current_price:
