@@ -7,7 +7,7 @@ import data.apiKey
 access = data.apiKey.access 
 secret = data.apiKey.secret 
 
-K = 0.7
+K = 0.5
 
 
 def get_target_price(ticker, k):
