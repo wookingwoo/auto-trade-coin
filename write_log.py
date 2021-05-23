@@ -44,6 +44,6 @@ def write_all_log(s):
         print(d4, "경로가 없어 새로 생성 했습니다.")
 
     # 로그 작성
-    f = open(d5, 'a')
+    f = open(d5, 'a', encoding="UTF8")
     f.writelines(s + "\n")
     f.close()
