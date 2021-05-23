@@ -5,7 +5,6 @@ import schedule
 import requests
 from fbprophet import Prophet
 
-
 import data.apiKey
 from write_log import *
 
@@ -14,21 +13,16 @@ access = data.apiKey.upbit_access
 secret = data.apiKey.upbit_secret
 myToken = data.apiKey.slack_token
 
-
-K = 0.5
-
+K = 0.5 # 상수 K 값 (범위: 0~1)
 
 def post_message(token, channel, text):
-
-    logMSG = datetime.datetime.now().strftime('[%Y/%m/%d %H:%M:%S] ') + text  # 시간 추가
-
+    logMSG = datetime.datetime.now().strftime(
+        '[%Y/%m/%d %H:%M:%S] ') + text  # 시간 추가
     print(logMSG)  # 콘솔 출력
-
     response = requests.post("https://slack.com/api/chat.postMessage",
                              headers={"Authorization": "Bearer "+token},
                              data={"channel": channel, "text": logMSG}
                              )  # 슬랙 메시지 전송
-
     write_all_log(logMSG)  # 로그 데이터 기록
 
 
@@ -76,8 +70,9 @@ predicted_close_price = 0
 
 # Prophet으로 당일 종가 가격 예측
 def predict_price(ticker):
-    post_message(myToken, "#crypto", "Prophet로 종가 가격을 다시 예측합니다. (1시간마다 재계산)")
-    
+    post_message(myToken, "#crypto",
+                 "Prophet로 종가 가격을 다시 예측합니다. (1시간을 주기로 업데이트)")
+
     global predicted_close_price
     df = pyupbit.get_ohlcv(ticker, interval="minute60")
     df = df.reset_index()
@@ -98,22 +93,17 @@ def predict_price(ticker):
 
 
 predict_price("KRW-BTC")
-schedule.every().hour.do(lambda: predict_price("KRW-BTC"))
-
+schedule.every().hour.do(lambda: predict_price("KRW-BTC"))  # 1시간마다 실행
 
 post_message(myToken, "#crypto", "프로그램을 시작합니다.")
-
-
 post_message(myToken, "#crypto", "로그인을 합니다.")
-
 
 # 로그인
 upbit = pyupbit.Upbit(access, secret)
 
-
 # 자동매매 시작
 while True:
-    # try:
+    try:
         now = datetime.datetime.now()
         start_time = get_start_time("KRW-BTC")
         end_time = start_time + datetime.timedelta(days=1)
@@ -135,9 +125,9 @@ while True:
                     buy_result = upbit.buy_market_order(
                         "KRW-BTC", krw*0.9995)  # 수수료 (0.05%) 제외
                     post_message(myToken, "#crypto",
-                                 "BTC buy : " + str(buy_result))
+                                "BTC buy : " + str(buy_result))
 
-# 08시59분50초 ~ 09시 00분 00초 (전량 매도)
+    # 08시59분50초 ~ 09시 00분 00초 (전량 매도)
         else:
             post_message(myToken, "#crypto", "매도 시간입니다.")
             btc = get_balance("BTC")
@@ -145,9 +135,9 @@ while True:
                 sell_result = upbit.sell_market_order(
                     "KRW-BTC", btc*0.9995)  # 수수료 (0.05%) 제외
                 post_message(myToken, "#crypto",
-                             "전량 매도 (수수료 0.05% 제외) : " + str(sell_result))
+                            "전량 매도 (수수료 0.05% 제외) : " + str(sell_result))
 
         time.sleep(1)
-    # except Exception as e:
-    #     post_message(myToken, "#crypto", "[에러가 발생했습니다]\n에러 메시지: " + str(e))
-    #     time.sleep(60*3)
+    except Exception as e:
+        post_message(myToken, "#crypto", "[에러가 발생했습니다]\n에러 메시지: " + str(e))
+        time.sleep(60*3)
