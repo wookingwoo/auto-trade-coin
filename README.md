@@ -35,3 +35,28 @@ pyjwt 모듈을 필요로 합니다. (pyjwt >= 2.0)
 ```sh
 pip install pyjwt
 ```
+
+
+Importing plotly failed. Interactive plots will not work. 해결
+```
+pip install plotly
+```
+
+## 가상환경
+
+```sh
+conda info --envs
+```
+
+
+mac/linux
+
+```sh
+source activate my_python_env
+```
+
+windows
+
+```sh
+activate my_python_env
+```

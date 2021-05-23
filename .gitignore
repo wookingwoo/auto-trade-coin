@@ -1,4 +1,6 @@
-data
 .vscode
+__pycache__
 
+data
+log_data
 .xlsx

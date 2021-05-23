@@ -2,8 +2,8 @@ import time
 import pyupbit
 import datetime
 import schedule
+import requests
 from fbprophet import Prophet
-from datetime import datetime
 
 
 import data.apiKey
@@ -20,7 +20,7 @@ K = 0.5
 
 def post_message(token, channel, text):
 
-    logMSG = datetime.now().strftime('[%Y/%m/%d %H:%M:%S] ') + text  # 시간 추가
+    logMSG = datetime.datetime.now().strftime('[%Y/%m/%d %H:%M:%S] ') + text  # 시간 추가
 
     print(logMSG)  # 콘솔 출력
 
@@ -76,6 +76,8 @@ predicted_close_price = 0
 
 # Prophet으로 당일 종가 가격 예측
 def predict_price(ticker):
+    post_message(myToken, "#crypto", "Prophet로 종가 가격을 다시 예측합니다. (1시간마다 재계산)")
+    
     global predicted_close_price
     df = pyupbit.get_ohlcv(ticker, interval="minute60")
     df = df.reset_index()
@@ -111,7 +113,7 @@ upbit = pyupbit.Upbit(access, secret)
 
 # 자동매매 시작
 while True:
-    try:
+    # try:
         now = datetime.datetime.now()
         start_time = get_start_time("KRW-BTC")
         end_time = start_time + datetime.timedelta(days=1)
@@ -119,12 +121,15 @@ while True:
 
         # 09시와 다음날 08시59분50초 사이일때
         if start_time < now < end_time - datetime.timedelta(seconds=10):
+            # post_message(myToken, "#crypto", "target_price, ma15, current_price를 다시 계산합니다.")
+            print("target_price, ma15, current_price를 다시 계산합니다.")
             target_price = get_target_price("KRW-BTC", K)
             ma15 = get_ma15("KRW-BTC")
             current_price = get_current_price("KRW-BTC")
 
             # 변동성 돌파전략, 15일 이동 평균선, Prophet 종가 예측 적용
             if target_price < current_price and ma15 < current_price and current_price < predicted_close_price:
+                post_message(myToken, "#crypto", "매수 조건에 만족합니다.")
                 krw = get_balance("KRW")
                 if krw > 5000:
                     buy_result = upbit.buy_market_order(
@@ -134,6 +139,7 @@ while True:
 
 # 08시59분50초 ~ 09시 00분 00초 (전량 매도)
         else:
+            post_message(myToken, "#crypto", "매도 시간입니다.")
             btc = get_balance("BTC")
             if btc > 0.00008:
                 sell_result = upbit.sell_market_order(
@@ -142,6 +148,6 @@ while True:
                              "전량 매도 (수수료 0.05% 제외) : " + str(sell_result))
 
         time.sleep(1)
-    except Exception as e:
-        post_message(myToken, "#crypto", "[에러가 발생했습니다]\n에러 메시지: " + str(e))
-        time.sleep(60*3)
+    # except Exception as e:
+    #     post_message(myToken, "#crypto", "[에러가 발생했습니다]\n에러 메시지: " + str(e))
+    #     time.sleep(60*3)
