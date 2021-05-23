@@ -15,9 +15,12 @@ myToken = data.apiKey.slack_token
 
 K = 0.5 # 상수 K 값 (범위: 0~1)
 
-def post_message(token, channel, text):
-    logMSG = datetime.datetime.now().strftime(
-        '[%Y/%m/%d %H:%M:%S] ') + text  # 시간 추가
+def post_message(token, channel, text, setDatetime=True):
+    if setDatetime:
+        logMSG = datetime.datetime.now().strftime(
+            '[%Y/%m/%d %H:%M:%S] ') + text  # 시간 추가
+    else:
+        logMSG = text
     print(logMSG)  # 콘솔 출력
     response = requests.post("https://slack.com/api/chat.postMessage",
                              headers={"Authorization": "Bearer "+token},
@@ -92,10 +95,13 @@ def predict_price(ticker):
     predicted_close_price = closeValue
 
 
+post_message(myToken, "#crypto", "\n====================================================", False)
+post_message(myToken, "#crypto", "프로그램을 시작합니다.")
+
+
 predict_price("KRW-BTC")
 schedule.every().hour.do(lambda: predict_price("KRW-BTC"))  # 1시간마다 실행
 
-post_message(myToken, "#crypto", "프로그램을 시작합니다.")
 post_message(myToken, "#crypto", "로그인을 합니다.")
 
 # 로그인
