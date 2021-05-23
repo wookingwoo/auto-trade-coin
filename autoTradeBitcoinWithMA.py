@@ -4,8 +4,8 @@ import datetime
 import data.apiKey
 
 
-access = data.apiKey.access 
-secret = data.apiKey.secret 
+access = data.apiKey.upbit_access 
+secret = data.apiKey.upbit_secret 
 
 K = 0.5
 

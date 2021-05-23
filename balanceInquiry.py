@@ -2,8 +2,8 @@ import pyupbit
 import data.apiKey
 
 # 로그인
-access = data.apiKey.access 
-secret = data.apiKey.secret 
+access = data.apiKey.upbit_access 
+secret = data.apiKey.upbit_secret 
 upbit = pyupbit.Upbit(access, secret)
 
 # 잔고 조회

@@ -24,6 +24,9 @@ https://github.com/sharebook-kr/pyupbit
 
 ```sh
 pip install pyupbit
+pip install schedule
+conda install -c conda-forge fbprophet
+pip install pystan --upgrade
 ```
 
 pyjwt 모듈을 필요로 합니다. (pyjwt >= 2.0)
