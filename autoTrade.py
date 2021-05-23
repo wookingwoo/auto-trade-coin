@@ -132,15 +132,16 @@ while True:
                     post_message(myToken, "#crypto",
                                  "BTC buy : " + str(buy_result))
 
+# 08시59분50초 ~ 09시 00분 00초 (전량 매도)
         else:
             btc = get_balance("BTC")
             if btc > 0.00008:
                 sell_result = upbit.sell_market_order(
                     "KRW-BTC", btc*0.9995)  # 수수료 (0.05%) 제외
                 post_message(myToken, "#crypto",
-                             "BTC buy : " + str(sell_result))
+                             "전량 매도 (수수료 0.05% 제외) : " + str(sell_result))
 
         time.sleep(1)
     except Exception as e:
-        post_message(myToken, "#crypto", "[에러가 발생했습니다]\n에러 메시지: " + e)
+        post_message(myToken, "#crypto", "[에러가 발생했습니다]\n에러 메시지: " + str(e))
         time.sleep(60*3)
