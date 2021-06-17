@@ -15,6 +15,7 @@ def get_ror(k=0.5):
     return ror
 
 
+print("optimal한 k값을 찾습니다.")
 for k in np.arange(0.1, 1.0, 0.1):
     ror = get_ror(k)
     print("%.1f %f" % (k, ror))
