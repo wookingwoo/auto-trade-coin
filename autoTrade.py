@@ -6,16 +6,26 @@ import requests
 from fbprophet import Prophet
 
 import data.apiKey
+import data.coin_option
 from write_log import *
 
 
-access = data.apiKey.upbit_access
-secret = data.apiKey.upbit_secret
-myToken = data.apiKey.slack_token
+# upbit API Keys
+upbit_access = data.apiKey.upbit_access
+upbit_secret = data.apiKey.upbit_secret
 
-K = 0.5 # 상수 K 값 (범위: 0~1)
+# slack API Keys
+slack_token = data.apiKey.slack_token
+slack_channel = data.apiKey.slack_channel
 
-def post_message(token, channel, text, setDatetime=True):
+K = data.coin_option.option_FLUCTUATION  # 상수 K 값 (범위: 0~1)
+
+
+def post_message(text, setDatetime=True):
+
+    token = slack_token
+    channel = slack_channel
+
     if setDatetime:
         logMSG = datetime.datetime.now().strftime(
             '[%Y/%m/%d %H:%M:%S] ') + text  # 시간 추가
@@ -73,8 +83,8 @@ predicted_close_price = 0
 
 # Prophet으로 당일 종가 가격 예측
 def predict_price(ticker):
-    post_message(myToken, "#crypto",
-                 "Prophet로 종가 가격을 다시 예측합니다. (1시간을 주기로 업데이트)")
+    post_message(
+        "Prophet로 종가 가격을 다시 예측합니다. (1시간을 주기로 업데이트)")
 
     global predicted_close_price
     df = pyupbit.get_ohlcv(ticker, interval="minute60")
@@ -95,17 +105,18 @@ def predict_price(ticker):
     predicted_close_price = closeValue
 
 
-post_message(myToken, "#crypto", "\n====================================================", False)
-post_message(myToken, "#crypto", "프로그램을 시작합니다.")
+post_message(
+    "\n====================================================", False)
+post_message("프로그램을 시작합니다.")
 
 
 predict_price("KRW-BTC")
 schedule.every().hour.do(lambda: predict_price("KRW-BTC"))  # 1시간마다 실행
 
-post_message(myToken, "#crypto", "로그인을 합니다.")
+post_message("로그인을 합니다.")
 
 # 로그인
-upbit = pyupbit.Upbit(access, secret)
+upbit = pyupbit.Upbit(upbit_access, upbit_secret)
 
 # 자동매매 시작
 while True:
@@ -125,25 +136,24 @@ while True:
 
             # 변동성 돌파전략, 15일 이동 평균선, Prophet 종가 예측 적용
             if target_price < current_price and ma15 < current_price and current_price < predicted_close_price:
-                post_message(myToken, "#crypto", "매수 조건에 만족합니다.")
+                post_message("매수 조건에 만족합니다.")
                 krw = get_balance("KRW")
                 if krw > 5000:
                     buy_result = upbit.buy_market_order(
                         "KRW-BTC", krw*0.9995)  # 수수료 (0.05%) 제외
-                    post_message(myToken, "#crypto",
-                                "BTC buy : " + str(buy_result))
+                    post_message("BTC buy : " + str(buy_result))
 
     # 08시59분50초 ~ 09시 00분 00초 (전량 매도)
         else:
-            post_message(myToken, "#crypto", "매도 시간입니다.")
+            post_message("매도 시간입니다.")
             btc = get_balance("BTC")
             if btc > 0.00008:
                 sell_result = upbit.sell_market_order(
                     "KRW-BTC", btc*0.9995)  # 수수료 (0.05%) 제외
-                post_message(myToken, "#crypto",
-                            "전량 매도 (수수료 0.05% 제외) : " + str(sell_result))
+                post_message(
+                    "전량 매도 (수수료 0.05% 제외) : " + str(sell_result))
 
         time.sleep(1)
     except Exception as e:
-        post_message(myToken, "#crypto", "[에러가 발생했습니다]\n에러 메시지: " + str(e))
+        post_message("[에러가 발생했습니다]\n에러 메시지: " + str(e))
         time.sleep(60*3)
