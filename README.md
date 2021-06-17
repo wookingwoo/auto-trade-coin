@@ -10,6 +10,8 @@ autoTrade.py: 비트코인 자동매매 (변동성 돌파전략, 15일 이동 �
 
 autoTradeBitcoinWithMA.py: (변동성 돌파전략, 15일 이동 평균선 적용)
 
+balanceInquiry.py: 현재 잔고 조회
+
 
 ## 참고 문서
 

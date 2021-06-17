@@ -1,11 +1,12 @@
 import time
 import pyupbit
 import datetime
+
 import data.apiKey
 
 
-access = data.apiKey.upbit_access 
-secret = data.apiKey.upbit_secret 
+access = data.apiKey.upbit_access
+secret = data.apiKey.upbit_secret
 
 K = 0.5
 
@@ -13,7 +14,8 @@ K = 0.5
 def get_target_price(ticker, k):
     """변동성 돌파 전략으로 매수 목표가 조회"""
     df = pyupbit.get_ohlcv(ticker, interval="day", count=2)
-    target_price = df.iloc[0]['close'] + (df.iloc[0]['high'] - df.iloc[0]['low']) * k
+    target_price = df.iloc[0]['close'] + \
+        (df.iloc[0]['high'] - df.iloc[0]['low']) * k
     return target_price
 
 
@@ -67,11 +69,13 @@ while True:
             if target_price < current_price and ma15 < current_price:
                 krw = get_balance("KRW")
                 if krw > 5000:
-                    upbit.buy_market_order("KRW-BTC", krw * 0.9995)  # 수수료 (0.05%) 제외
+                    upbit.buy_market_order(
+                        "KRW-BTC", krw * 0.9995)  # 수수료 (0.05%) 제외
         else:
             btc = get_balance("BTC")
             if btc > 0.00008:
-                upbit.sell_market_order("KRW-BTC", btc * 0.9995)  # 수수료 (0.05%) 제외
+                upbit.sell_market_order(
+                    "KRW-BTC", btc * 0.9995)  # 수수료 (0.05%) 제외
         time.sleep(1)
     except Exception as e:
         print(e)

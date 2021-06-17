@@ -8,6 +8,7 @@ upbit = pyupbit.Upbit(access, secret)
 
 # 잔고 조회
 print("KRW-BTC:", upbit.get_balance("KRW-BTC")) # KRW - BTC 조회
+print("BTC:", upbit.get_balance("BTC")) # BTC 조회
 print("KRW-ETH:", upbit.get_balance("KRW-ETH")) # KRW - ETH 조회
 print("KRW-DOGE:", upbit.get_balance("KRW-DOGE")) # KRW - DOGE 조회
 

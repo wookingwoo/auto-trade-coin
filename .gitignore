@@ -4,3 +4,5 @@ __pycache__
 data
 log_data
 .xlsx
+
+test.py
