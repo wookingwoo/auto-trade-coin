@@ -18,7 +18,12 @@ upbit_secret = data.apiKey.upbit_secret
 slack_token = data.apiKey.slack_token
 slack_channel = data.apiKey.slack_channel
 
-K = data.coin_option.option_FLUCTUATION  # 상수 K 값 (범위: 0~1)
+
+# trade option
+option_symbol_list = data.coin_option.option_symbol_list  # 매수할 종목들
+option_target_buy_count = data.coin_option.option_target_buy_count  # 매수할 종목 수
+option_buy_percent = data.coin_option.option_buy_percent  # 총 주문 금액 비율
+K = data.coin_option.option_FLUCTUATION  # 변동폭 (범위: 0~1)
 
 
 def post_message(text, setDatetime=True):
@@ -78,13 +83,13 @@ def get_ma15(ticker):
     return ma15
 
 
-predicted_close_price = 0
+predicted_close_price = {}
 
 
 # Prophet으로 당일 종가 가격 예측
 def predict_price(ticker):
     post_message(
-        "Prophet로 종가 가격을 다시 예측합니다. (1시간을 주기로 업데이트)")
+        "Prophet로 {}의 종가 가격을 다시 예측합니다. (1시간을 주기로 업데이트)".format(ticker))
 
     global predicted_close_price
     df = pyupbit.get_ohlcv(ticker, interval="minute60")
@@ -102,7 +107,14 @@ def predict_price(ticker):
         closeDf = forecast[forecast['ds'] ==
                            data.iloc[-1]['ds'].replace(hour=9)]
     closeValue = closeDf['yhat'].values[0]
-    predicted_close_price = closeValue
+    predicted_close_price[ticker] = closeValue
+    post_message("{}의 종가 예측 결과: {}".format(ticker, closeValue))
+    print()
+
+
+def run_symbollist_predict_price(symbol_list):
+    for sym in symbol_list:
+        predict_price(sym)
 
 
 post_message(
@@ -110,50 +122,81 @@ post_message(
 post_message("프로그램을 시작합니다.")
 
 
-predict_price("KRW-BTC")
-schedule.every().hour.do(lambda: predict_price("KRW-BTC"))  # 1시간마다 실행
+run_symbollist_predict_price(option_symbol_list)
+schedule.every().hour.do(lambda: run_symbollist_predict_price(
+    option_symbol_list))  # 1시간마다 실행
 
 post_message("로그인을 합니다.")
 
 # 로그인
 upbit = pyupbit.Upbit(upbit_access, upbit_secret)
 
+bought_list = []     # 매수 완료된 종목 리스트 초기화
+
+
 # 자동매매 시작
 while True:
     try:
-        now = datetime.datetime.now()
-        start_time = get_start_time("KRW-BTC")
-        end_time = start_time + datetime.timedelta(days=1)
-        schedule.run_pending()
 
-        # 09시와 다음날 08시59분50초 사이일때
-        if start_time < now < end_time - datetime.timedelta(seconds=10):
-            # post_message(myToken, "#crypto", "target_price, ma15, current_price를 다시 계산합니다.")
-            print("target_price, ma15, current_price를 다시 계산합니다.")
-            target_price = get_target_price("KRW-BTC", K)
-            ma15 = get_ma15("KRW-BTC")
-            current_price = get_current_price("KRW-BTC")
+        for code in option_symbol_list:
 
-            # 변동성 돌파전략, 15일 이동 평균선, Prophet 종가 예측 적용
-            if target_price < current_price and ma15 < current_price and current_price < predicted_close_price:
-                post_message("매수 조건에 만족합니다.")
-                krw = get_balance("KRW")
-                if krw > 5000:
-                    buy_result = upbit.buy_market_order(
-                        "KRW-BTC", krw*0.9995)  # 수수료 (0.05%) 제외
-                    post_message("BTC buy : " + str(buy_result))
+            now = datetime.datetime.now()
+            start_time = get_start_time(code)
+            end_time = start_time + datetime.timedelta(days=1)
+            schedule.run_pending()
 
-    # 08시59분50초 ~ 09시 00분 00초 (전량 매도)
-        else:
-            post_message("매도 시간입니다.")
-            btc = get_balance("BTC")
-            if btc > 0.00008:
-                sell_result = upbit.sell_market_order(
-                    "KRW-BTC", btc*0.9995)  # 수수료 (0.05%) 제외
-                post_message(
-                    "전량 매도 (수수료 0.05% 제외) : " + str(sell_result))
+            # 09시와 다음날 08시59분50초 사이일때
+            if start_time < now < end_time - datetime.timedelta(seconds=10):
+                # post_message(myToken, "#crypto", "target_price, ma15, current_price를 다시 계산합니다.")
+                print("{}의 target_price, ma15, current_price를 다시 계산합니다.".format(code))
+                target_price = get_target_price(code, K)
+                ma15 = get_ma15(code)
+                current_price = get_current_price(code)
 
-        time.sleep(1)
+                # 변동성 돌파전략, 15일 이동 평균선, Prophet 종가 예측 적용
+                if target_price < current_price and ma15 < current_price and current_price < predicted_close_price[code]:
+                    post_message("{}가 매수 조건에 만족합니다.".format(code))
+                    krw = get_balance("KRW")
+                    if krw > 5000:
+
+                        if len(bought_list) < option_target_buy_count:
+
+                            if code in bought_list:
+
+                                buy_result = upbit.buy_market_order(
+                                    code, krw*0.9995)  # 수수료 (0.05%) 제외
+
+                                bought_list.append(code)
+                                post_message("`Buy {} : {}`".format(
+                                    code, str(buy_result)))
+
+                            else:
+                                print("{}는 이미 매수한 종목이므로 pass합니다.".format(code))
+
+                        else:
+                            print("{}개의 종목을 모두 매수 했기 때문에 pass합니다.".format(
+                                option_target_buy_count))
+
+                    else:
+                        print("잔고가 5000원 미만이기 때문에 {}를 메수하지 않습니다.".format(code))
+
+        # 08시59분50초 ~ 09시 00분 00초 (전량 매도)
+            else:
+                post_message("매도 시간입니다.")
+
+                coin_balance = get_balance(code)  # 보유한 코인 금액 (코인 단위)
+                price_KRW = pyupbit.get_current_price(bought_list)
+                current_krw_price = int(price_KRW[code])
+                my_coin_balance_krw = coin_balance * \
+                    current_krw_price  # 보유한 코인 평가금액 (원화 단위)
+
+                if my_coin_balance_krw > 5000*1.05:
+                    sell_result = upbit.sell_market_order(
+                        code, coin_balance*0.9995)  # 수수료 (0.05%) 제외
+                    post_message(
+                        "전량 매도 (수수료 0.05% 제외) : " + str(sell_result))
+
+            time.sleep(1)
     except Exception as e:
         post_message("[에러가 발생했습니다]\n에러 메시지: " + str(e))
         time.sleep(60*3)
