@@ -9,7 +9,6 @@ import data.apiKey
 import data.coin_option
 from write_log import *
 
-
 # upbit API Keys
 upbit_access = data.apiKey.upbit_access
 upbit_secret = data.apiKey.upbit_secret
@@ -17,7 +16,6 @@ upbit_secret = data.apiKey.upbit_secret
 # slack API Keys
 slack_token = data.apiKey.slack_token
 slack_channel = data.apiKey.slack_channel
-
 
 # trade option
 option_symbol_list = data.coin_option.option_symbol_list  # 매수할 종목들
@@ -27,7 +25,6 @@ K = data.coin_option.option_FLUCTUATION  # 변동폭 (범위: 0~1)
 
 
 def post_message(text, setDatetime=True):
-
     token = slack_token
     channel = slack_channel
 
@@ -38,7 +35,7 @@ def post_message(text, setDatetime=True):
         logMSG = text
     print(logMSG)  # 콘솔 출력
     response = requests.post("https://slack.com/api/chat.postMessage",
-                             headers={"Authorization": "Bearer "+token},
+                             headers={"Authorization": "Bearer " + token},
                              data={"channel": channel, "text": logMSG}
                              )  # 슬랙 메시지 전송
     write_all_log(logMSG)  # 로그 데이터 기록
@@ -48,7 +45,7 @@ def post_message(text, setDatetime=True):
 def get_target_price(ticker, k):
     df = pyupbit.get_ohlcv(ticker, interval="day", count=2)
     target_price = df.iloc[0]['close'] + \
-        (df.iloc[0]['high'] - df.iloc[0]['low']) * k
+                   (df.iloc[0]['high'] - df.iloc[0]['low']) * k
     return target_price
 
 
@@ -121,7 +118,6 @@ post_message(
     "\n====================================================", False)
 post_message("프로그램을 시작합니다.")
 
-
 run_symbollist_predict_price(option_symbol_list)
 schedule.every().hour.do(lambda: run_symbollist_predict_price(
     option_symbol_list))  # 1시간마다 실행
@@ -131,8 +127,7 @@ post_message("로그인을 합니다.")
 # 로그인
 upbit = pyupbit.Upbit(upbit_access, upbit_secret)
 
-bought_list = []     # 매수 완료된 종목 리스트 초기화
-
+bought_list = []  # 매수 완료된 종목 리스트 초기화
 
 # 자동매매 시작
 while True:
@@ -154,7 +149,8 @@ while True:
                 current_price = get_current_price(code)
 
                 # 변동성 돌파전략, 15일 이동 평균선, Prophet 종가 예측 적용
-                if target_price < current_price and ma15 < current_price and current_price < predicted_close_price[code]:
+                if target_price < current_price and ma15 < current_price and current_price < predicted_close_price[
+                    code]:
                     post_message("{}가 매수 조건에 만족합니다.".format(code))
                     krw = get_balance("KRW")
                     if krw > 5000:
@@ -164,7 +160,7 @@ while True:
                             if code in bought_list:
 
                                 buy_result = upbit.buy_market_order(
-                                    code, krw*0.9995)  # 수수료 (0.05%) 제외
+                                    code, krw * 0.9995)  # 수수료 (0.05%) 제외
 
                                 bought_list.append(code)
                                 post_message("`Buy {} : {}`".format(
@@ -180,7 +176,7 @@ while True:
                     else:
                         print("잔고가 5000원 미만이기 때문에 {}를 메수하지 않습니다.".format(code))
 
-        # 08시59분50초 ~ 09시 00분 00초 (전량 매도)
+            # 08시59분50초 ~ 09시 00분 00초 (전량 매도)
             else:
                 post_message("매도 시간입니다.")
 
@@ -188,15 +184,15 @@ while True:
                 price_KRW = pyupbit.get_current_price(bought_list)
                 current_krw_price = int(price_KRW[code])
                 my_coin_balance_krw = coin_balance * \
-                    current_krw_price  # 보유한 코인 평가금액 (원화 단위)
+                                      current_krw_price  # 보유한 코인 평가금액 (원화 단위)
 
-                if my_coin_balance_krw > 5000*1.05:
+                if my_coin_balance_krw > 5000 * 1.05:
                     sell_result = upbit.sell_market_order(
-                        code, coin_balance*0.9995)  # 수수료 (0.05%) 제외
+                        code, coin_balance * 0.9995)  # 수수료 (0.05%) 제외
                     post_message(
                         "전량 매도 (수수료 0.05% 제외) : " + str(sell_result))
 
             time.sleep(1)
     except Exception as e:
         post_message("[에러가 발생했습니다]\n에러 메시지: " + str(e))
-        time.sleep(60*3)
+        time.sleep(60 * 3)
