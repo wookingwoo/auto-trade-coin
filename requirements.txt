@@ -1,0 +1,5 @@
+pyupbit==0.2.19
+pandas==1.3.2
+numpy==1.21.2
+requests==2.26.0
+django-scheduler==0.9.5
