@@ -85,7 +85,7 @@ predicted_close_price = {}
 
 # Prophet으로 당일 종가 가격 예측
 def predict_price(ticker):
-    # post_message("Prophet로 {}의 종가 가격을 다시 예측합니다. (1시간을 주기로 업데이트)".format(ticker))
+    print("Prophet로 {}의 종가 가격을 다시 예측합니다. (1시간을 주기로 업데이트)".format(ticker))
 
     global predicted_close_price
     df = pyupbit.get_ohlcv(ticker, interval="minute60")
@@ -104,8 +104,8 @@ def predict_price(ticker):
                            data.iloc[-1]['ds'].replace(hour=9)]
     closeValue = closeDf['yhat'].values[0]
     predicted_close_price[ticker] = closeValue
-    # post_message("{}의 종가 예측 결과: {}".format(ticker, closeValue))
-    # print()
+    print("{}의 종가 예측 결과: {}".format(ticker, closeValue))
+    print()
     return_msg = "{}: {}원".format(ticker, format(round(closeValue, 3), ","))
     return return_msg
 
@@ -120,20 +120,30 @@ def run_symbollist_predict_price(symbol_list):
     post_message(predict_msg)
 
 
+def setting_msg_post():
+    global option_symbol_list, option_target_buy_count, option_buy_percent, K, bought_list
+    post_message("<자동화 세팅값>\n매수할 종목 후보: {}\n매수할 종목 수: {}\n주문 금액 비율: {}\nK값 (범위:0~1): {}\n매수 완료한 종목: {}\n".format(
+        option_symbol_list, option_target_buy_count, option_buy_percent, K, bought_list))
+
+
+# == main program ==
+
+bought_list = []  # 매수 완료된 종목 리스트 초기화
+
 post_message(
     "\n====================================================", False)
 post_message("프로그램을 시작합니다.")
+setting_msg_post()
 
 run_symbollist_predict_price(option_symbol_list)
 schedule.every().hour.do(lambda: run_symbollist_predict_price(
     option_symbol_list))  # 1시간마다 실행
 
-post_message("로그인을 합니다.")
+post_message("upbit api에 access 합니다.")
 
 # 로그인
 upbit = pyupbit.Upbit(upbit_access, upbit_secret)
 
-bought_list = []  # 매수 완료된 종목 리스트 초기화
 
 # 자동매매 시작
 while True:
@@ -147,8 +157,8 @@ while True:
                 datetime.timedelta(days=1)  # 대부분 오전 9시 + 1일
             schedule.run_pending()
 
-            # 09시와 다음날 08시58분00초 사이일때
-            if start_time < now < end_time - datetime.timedelta(seconds=120):
+            # 09시와 다음날 08시55분00초 사이일때
+            if start_time < now < end_time - datetime.timedelta(seconds=60*5):
                 # post_message(myToken, "#crypto", "target_price, ma15, current_price를 다시 계산합니다.")
                 print("{}의 target_price, ma15, current_price를 다시 계산합니다.".format(code))
                 target_price = get_target_price(code, K)
@@ -157,7 +167,7 @@ while True:
 
                 # 변동성 돌파전략, 15일 이동 평균선, Prophet 종가 예측 적용
                 if target_price < current_price and ma15 < current_price and current_price < predicted_close_price[code]:
-                    post_message("{}가 매수 조건에 만족합니다.".format(code))
+                    print("{}가 매수 조건에 만족합니다.".format(code))
                     krw = get_balance("KRW")
                     if krw > 5000:
 
@@ -169,8 +179,10 @@ while True:
                                     code, krw * option_buy_percent * 0.9995)  # 수수료 (0.05%) 제외
 
                                 bought_list.append(code)
-                                post_message("`Buy {}` : {}".format(
+                                post_message("`{} 매수 완료!!` : {}".format(
                                     code, str(buy_result)))
+
+                                setting_msg_post()
 
                             else:
                                 print("{}는 이미 매수한 종목이므로 pass합니다.".format(code))
@@ -182,7 +194,7 @@ while True:
                     else:
                         print("잔고가 5000원 미만이기 때문에 {}를 메수하지 않습니다.".format(code))
 
-            # 08시58분00초 ~ 09시 00분 00초 (전량 매도)
+            # 08시55분00초 ~ 09시 00분 00초 (전량 매도)
             else:
                 post_message("매도 시간입니다.")
 
