@@ -118,8 +118,8 @@ def predict_price(ticker):
     elif closeValue == get_current_price(ticker):
         arrow_emoji = "◾"
 
-    return_msg = "{}: {}원 {}".format(
-        ticker, format(round(closeValue, 3), ","), arrow_emoji)
+    return_msg = "{}: {} {}원".format(
+        ticker, arrow_emoji, format(round(closeValue, 3), ","))
 
     return return_msg
 
