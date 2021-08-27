@@ -12,18 +12,33 @@ autoTradeBitcoinWithMA.py: (변동성 돌파전략, 15일 이동 평균선 적�
 
 balanceInquiry.py: 현재 잔고 조회
 
-
 ## 참고 문서
 
 https://wikidocs.net/book/1665
 
 https://github.com/sharebook-kr/pyupbit
 
-
-
 ## Installation
 
+### Windows
+
+- 아나콘다(https://www.anaconda.com/) 설치
+
 ```sh
+
+pip install pyupbit
+pip install schedule
+conda install -c conda-forge fbprophet
+pip install pystan --upgrade
+```
+
+### Ubuntu 20.4
+
+- 4GB이상 RAM 필요 (AWS t2.medium 이상)
+
+```sh
+sudo apt update
+sudo ln -sf /usr/share/zoneinfo/Asia/Seoul /etc/localtime
 sudo apt install python3-pip
 pip3 install pyupbit
 pip3 install schedule
@@ -32,24 +47,11 @@ pip3 install convertdate
 pip3 install fbprophet
 ```
 
-pyjwt 모듈을 필요로 합니다. (pyjwt >= 2.0)
-
-```sh
-pip install pyjwt
-```
-
-
-Importing plotly failed. Interactive plots will not work. 해결
-```
-pip install plotly
-```
-
-## 가상환경
+## conda 가상환경
 
 ```sh
 conda info --envs
 ```
-
 
 mac/linux
 
