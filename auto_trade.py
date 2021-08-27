@@ -122,8 +122,8 @@ def run_symbollist_predict_price(symbol_list):
 
 def setting_msg_post():
     global option_symbol_list, option_target_buy_count, option_buy_percent, K, bought_list
-    post_message("<자동화 세팅값>\n매수할 종목 후보: {}\n매수할 종목 수: {}\n주문 금액 비율: {}\nK값 (범위:0~1): {}\n매수 완료한 종목: {}\n".format(
-        option_symbol_list, option_target_buy_count, option_buy_percent, K, bought_list))
+    post_message("<자동화 세팅값>\n매수할 종목 후보({}개): {}\n매수할 종목 수: {}\n주문 금액 비율: {}\nK값 (범위:0~1): {}\n매수 완료한 종목: {}\n".format(
+        len(option_symbol_list), option_symbol_list, option_target_buy_count, option_buy_percent, K, bought_list))
 
 
 # == main program ==
@@ -157,8 +157,8 @@ while True:
                 datetime.timedelta(days=1)  # 대부분 오전 9시 + 1일
             schedule.run_pending()
 
-            # 09시와 다음날 08시55분00초 사이일때
-            if start_time < now < end_time - datetime.timedelta(seconds=60*5):
+            # 09시와 다음날 08시50분00초 사이일때
+            if start_time < now < end_time - datetime.timedelta(seconds=60*10):
                 # post_message(myToken, "#crypto", "target_price, ma15, current_price를 다시 계산합니다.")
                 print("{}의 target_price, ma15, current_price를 다시 계산합니다.".format(code))
                 target_price = get_target_price(code, K)
@@ -194,7 +194,7 @@ while True:
                     else:
                         print("잔고가 5000원 미만이기 때문에 {}를 메수하지 않습니다.".format(code))
 
-            # 08시55분00초 ~ 09시 00분 00초 (전량 매도)
+            # 08시50분00초 ~ 09시 00분 00초 (전량 매도)
             else:
                 post_message("매도 시간입니다.")
 
