@@ -2,7 +2,7 @@
 
 ## introduce source
 
-backTest.py : 백테스팅
+back_test.py : 백테스팅
 
 bestK.py : optimal한 k값 찾기
 

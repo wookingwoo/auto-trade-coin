@@ -25,8 +25,8 @@ df['hpr'] = df['ror'].cumprod()
 # Draw Down 계산 (누적 최대 값과 현재 hpr 차이 / 누적 최대값 * 100)
 df['dd'] = (df['hpr'].cummax() - df['hpr']) / df['hpr'].cummax() * 100
 
-#MDD 계산
+# MDD 계산
 print("MDD(%): ", df['dd'].max())
 
-#엑셀로 출력
+# 엑셀로 출력
 df.to_excel("dd.xlsx")
