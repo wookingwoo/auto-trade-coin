@@ -85,8 +85,7 @@ predicted_close_price = {}
 
 # Prophet으로 당일 종가 가격 예측
 def predict_price(ticker):
-    post_message(
-        "Prophet로 {}의 종가 가격을 다시 예측합니다. (1시간을 주기로 업데이트)".format(ticker))
+    # post_message("Prophet로 {}의 종가 가격을 다시 예측합니다. (1시간을 주기로 업데이트)".format(ticker))
 
     global predicted_close_price
     df = pyupbit.get_ohlcv(ticker, interval="minute60")
@@ -105,13 +104,20 @@ def predict_price(ticker):
                            data.iloc[-1]['ds'].replace(hour=9)]
     closeValue = closeDf['yhat'].values[0]
     predicted_close_price[ticker] = closeValue
-    post_message("{}의 종가 예측 결과: {}".format(ticker, closeValue))
-    print()
+    # post_message("{}의 종가 예측 결과: {}".format(ticker, closeValue))
+    # print()
+    return_msg = "{}: {}원".format(ticker, format(round(closeValue, 3), ","))
+    return return_msg
 
 
 def run_symbollist_predict_price(symbol_list):
+    predict_msg = "<Prophet 종가 예측>\n"
+
     for sym in symbol_list:
-        predict_price(sym)
+        predict_msg += predict_price(sym)
+        predict_msg += "\n"
+
+    post_message(predict_msg)
 
 
 post_message(
