@@ -106,7 +106,21 @@ def predict_price(ticker):
     predicted_close_price[ticker] = closeValue
     print("{}의 종가 예측 결과: {}".format(ticker, closeValue))
     print()
-    return_msg = "{}: {}원".format(ticker, format(round(closeValue, 3), ","))
+
+    arrow_emoji = ""
+
+    if closeValue > get_current_price(ticker):
+        arrow_emoji = "🔺"
+
+    elif closeValue < get_current_price(ticker):
+        arrow_emoji = "⬇"
+
+    elif closeValue == get_current_price(ticker):
+        arrow_emoji = "◾"
+
+    return_msg = "{}: {}원 {}".format(
+        ticker, format(round(closeValue, 3), ","), arrow_emoji)
+
     return return_msg
 
 
