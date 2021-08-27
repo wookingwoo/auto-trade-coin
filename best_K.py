@@ -3,7 +3,14 @@ import numpy as np
 
 
 def get_ror(k=0.5):
-    df = pyupbit.get_ohlcv("KRW-BTC", count=7)
+
+    # 코인 종목
+    # stock_symbol = "KRW-BTC"
+    stock_symbol = "KRW-ETH"
+    # stock_symbol =  "KRW-DOGE"
+
+
+    df = pyupbit.get_ohlcv(stock_symbol, count=7)
     df['range'] = (df['high'] - df['low']) * k
     df['target'] = df['open'] + df['range'].shift(1)
 

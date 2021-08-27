@@ -4,7 +4,7 @@ import numpy as np
 
 K = 0.5  # K값 (범위: 0~1)
 
-# 주식 종목
+# 코인 종목
 # stock_symbol = "KRW-BTC"
 stock_symbol = "KRW-ETH"
 # stock_symbol =  "KRW-DOGE"

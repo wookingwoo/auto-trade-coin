@@ -4,9 +4,9 @@
 
 back_test.py : 백테스팅
 
-bestK.py : optimal한 k값 찾기
+best_K.py : optimal한 k값 찾기
 
-autoTrade.py: 비트코인 자동매매 (변동성 돌파전략, 15일 이동 평균선, Prophet 종가 예측 적용)
+auto_trade.py: 비트코인 자동매매 (변동성 돌파전략, 15일 이동 평균선, Prophet 종가 예측 적용)
 
 autoTradeBitcoinWithMA.py: (변동성 돌파전략, 15일 이동 평균선 적용)
 
