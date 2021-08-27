@@ -45,7 +45,7 @@ def post_message(text, setDatetime=True):
 def get_target_price(ticker, k):
     df = pyupbit.get_ohlcv(ticker, interval="day", count=2)
     target_price = df.iloc[0]['close'] + \
-                   (df.iloc[0]['high'] - df.iloc[0]['low']) * k
+        (df.iloc[0]['high'] - df.iloc[0]['low']) * k
     return target_price
 
 
@@ -136,12 +136,13 @@ while True:
         for code in option_symbol_list:
 
             now = datetime.datetime.now()
-            start_time = get_start_time(code)
-            end_time = start_time + datetime.timedelta(days=1)
+            start_time = get_start_time(code)  # 대부분 오전 9시
+            end_time = start_time + \
+                datetime.timedelta(days=1)  # 대부분 오전 9시 + 1일
             schedule.run_pending()
 
-            # 09시와 다음날 08시59분50초 사이일때
-            if start_time < now < end_time - datetime.timedelta(seconds=10):
+            # 09시와 다음날 08시58분00초 사이일때
+            if start_time < now < end_time - datetime.timedelta(seconds=120):
                 # post_message(myToken, "#crypto", "target_price, ma15, current_price를 다시 계산합니다.")
                 print("{}의 target_price, ma15, current_price를 다시 계산합니다.".format(code))
                 target_price = get_target_price(code, K)
@@ -150,7 +151,7 @@ while True:
 
                 # 변동성 돌파전략, 15일 이동 평균선, Prophet 종가 예측 적용
                 if target_price < current_price and ma15 < current_price and current_price < predicted_close_price[
-                    code]:
+                        code]:
                     post_message("{}가 매수 조건에 만족합니다.".format(code))
                     krw = get_balance("KRW")
                     if krw > 5000:
@@ -176,7 +177,7 @@ while True:
                     else:
                         print("잔고가 5000원 미만이기 때문에 {}를 메수하지 않습니다.".format(code))
 
-            # 08시59분50초 ~ 09시 00분 00초 (전량 매도)
+            # 08시58분00초 ~ 09시 00분 00초 (전량 매도)
             else:
                 post_message("매도 시간입니다.")
 
@@ -184,7 +185,7 @@ while True:
                 price_KRW = pyupbit.get_current_price(bought_list)
                 current_krw_price = int(price_KRW[code])
                 my_coin_balance_krw = coin_balance * \
-                                      current_krw_price  # 보유한 코인 평가금액 (원화 단위)
+                    current_krw_price  # 보유한 코인 평가금액 (원화 단위)
 
                 if my_coin_balance_krw > 5000 * 1.05:
                     sell_result = upbit.sell_market_order(
