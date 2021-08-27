@@ -150,15 +150,14 @@ while True:
                 current_price = get_current_price(code)
 
                 # 변동성 돌파전략, 15일 이동 평균선, Prophet 종가 예측 적용
-                if target_price < current_price and ma15 < current_price and current_price < predicted_close_price[
-                        code]:
+                if target_price < current_price and ma15 < current_price and current_price < predicted_close_price[code]:
                     post_message("{}가 매수 조건에 만족합니다.".format(code))
                     krw = get_balance("KRW")
                     if krw > 5000:
 
                         if len(bought_list) < option_target_buy_count:
 
-                            if code in bought_list:
+                            if not (code in bought_list):
 
                                 buy_result = upbit.buy_market_order(
                                     code, krw * 0.9995)  # 수수료 (0.05%) 제외
@@ -190,8 +189,8 @@ while True:
                 if my_coin_balance_krw > 5000 * 1.05:
                     sell_result = upbit.sell_market_order(
                         code, coin_balance * 0.9995)  # 수수료 (0.05%) 제외
-                    post_message(
-                        "전량 매도 (수수료 0.05% 제외) : " + str(sell_result))
+                    post_message("`전량 매도 (수수료 0.05% 제외) : " +
+                                 str(sell_result) + "`")
 
             time.sleep(1)
     except Exception as e:
