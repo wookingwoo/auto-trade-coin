@@ -21,7 +21,7 @@ slack_channel = data.apiKey.slack_channel
 option_symbol_list = data.coin_option.option_symbol_list  # 매수할 종목들
 option_target_buy_count = data.coin_option.option_target_buy_count  # 매수할 종목 수
 option_buy_percent = data.coin_option.option_buy_percent  # 총 주문 금액 비율
-K = data.coin_option.option_FLUCTUATION  # 변동폭 (범위: 0~1)
+K = data.coin_option.option_FLUCTUATION  # K값 (범위: 0~1)
 
 
 def post_message(text, setDatetime=True):
