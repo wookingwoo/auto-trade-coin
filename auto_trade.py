@@ -118,8 +118,11 @@ def predict_price(ticker):
     elif closeValue == get_current_price(ticker):
         arrow_emoji = "◾"
 
-    return_msg = "{}: {} {}원".format(
-        ticker, arrow_emoji, format(round(closeValue, 3), ","))
+    predict_rate_of_return = round(
+        closeValue / get_current_price(ticker) * 100 - 100, 2)  # 예상 수익률
+
+    return_msg = "{}: {} {}원 ({}%)".format(
+        ticker, arrow_emoji, format(round(closeValue, 2), ","), predict_rate_of_return)
 
     return return_msg
 
@@ -179,8 +182,8 @@ while True:
                 ma15 = get_ma15(code)
                 current_price = get_current_price(code)
 
-                # 변동성 돌파전략, 15일 이동 평균선, Prophet 종가 예측 적용
-                if target_price < current_price and ma15 < current_price and current_price < predicted_close_price[code]:
+                # 변동성 돌파전략, 15일 이동 평균선, Prophet 종가 예측(+1% 이상) 적용
+                if target_price < current_price and ma15 < current_price and (predicted_close_price[code] / current_price * 100 - 100) >= 1:
                     print("{}가 매수 조건에 만족합니다.".format(code))
                     krw = get_balance("KRW")
                     if krw > 5000:
