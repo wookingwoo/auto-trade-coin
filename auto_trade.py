@@ -166,10 +166,10 @@ while True:
                             if not (code in bought_list):
 
                                 buy_result = upbit.buy_market_order(
-                                    code, krw * 0.9995)  # 수수료 (0.05%) 제외
+                                    code, krw * option_buy_percent * 0.9995)  # 수수료 (0.05%) 제외
 
                                 bought_list.append(code)
-                                post_message("`Buy {} : {}`".format(
+                                post_message("`Buy {}` : {}".format(
                                     code, str(buy_result)))
 
                             else:
