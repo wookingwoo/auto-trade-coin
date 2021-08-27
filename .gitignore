@@ -1,8 +1,10 @@
 .vscode
+.idea/
 __pycache__
 
 data
 log_data
-.xlsx
+dd.xlsx
+~$dd.xlsx
 
 test.py
