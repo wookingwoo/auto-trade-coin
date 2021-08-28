@@ -176,7 +176,6 @@ while True:
 
             # 09시와 다음날 08시50분00초 사이일때
             if start_time < now < end_time - datetime.timedelta(seconds=60*10):
-                # post_message(myToken, "#crypto", "target_price, ma15, current_price를 다시 계산합니다.")
                 print("{}의 target_price, ma15, current_price를 다시 계산합니다.".format(code))
                 target_price = get_target_price(code, K)
                 ma15 = get_ma15(code)
@@ -213,13 +212,15 @@ while True:
 
             # 08시50분00초 ~ 09시 00분 00초 (전량 매도)
             else:
-                post_message("매도 시간입니다.")
+                print("매도 시간입니다.")
 
-                coin_balance = get_balance(code)  # 보유한 코인 금액 (코인 단위)
-                price_KRW = pyupbit.get_current_price(bought_list)
+                coin_balance = get_balance(code[4:])  # 보유한 코인 금액 (코인 단위)
+                price_KRW = pyupbit.get_current_price(option_symbol_list)
                 current_krw_price = int(price_KRW[code])
+
                 my_coin_balance_krw = coin_balance * \
                     current_krw_price  # 보유한 코인 평가금액 (원화 단위)
+                print("my_coin_balance_krw:", my_coin_balance_krw)
 
                 if my_coin_balance_krw > 5000 * 1.05:
                     sell_result = upbit.sell_market_order(
