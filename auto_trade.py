@@ -143,33 +143,47 @@ def run_symbollist_predict_price(symbol_list):
 
 
 def setting_msg_post():
-    global option_symbol_list, option_target_buy_count, option_buy_percent, K, bought_list
-    post_message("<자동화 세팅값>\n매수할 종목 후보({}개): {}\n매수할 종목 수: {}\n주문 금액 비율: {}\nK값 (범위:0~1): {}\n매수 완료한 종목: {}\n".format(
-        len(option_symbol_list), option_symbol_list, option_target_buy_count, option_buy_percent, K, bought_list))
+    global minimum_order_amount, FEE, option_symbol_list, option_target_buy_count, option_buy_percent, K, buy_amount, bought_list
+    post_message("<자동화 세팅값>\n설정 최소 주문 금액: {}원\n설정 수수료: {}%\n매수할 종목 후보({}개): {}\n매수할 종목 수: {}\n주문 금액 비율: {}\nK값 (범위:0~1): {}\n종목별 주문할 금액: {}원\n매수 완료한 종목: {}\n".format(
+        minimum_order_amount, FEE*100, len(option_symbol_list), option_symbol_list, option_target_buy_count, option_buy_percent, K, round(buy_amount, 2), bought_list))
+
+
+def calculate_buy_amount():
+
+    global option_buy_percent, FEE
+
+    amount = get_balance("KRW") * option_buy_percent * \
+        (1-FEE) * 0.95  # [한화] 종목별 주문할 금액  (설정한 수수료 제외, 5% 여유 남김)
+
+    return amount
 
 
 # == main program ==
-
 
 bought_list = []  # 매수 완료된 종목 리스트 초기화
 
 post_message(
     "\n====================================================", False)
 post_message("프로그램을 시작합니다.")
-setting_msg_post()
 
-run_symbollist_predict_price(option_symbol_list)
-schedule.every().hour.do(lambda: run_symbollist_predict_price(
-    option_symbol_list))  # 1시간마다 실행
 
 post_message("upbit api에 access 합니다.")
 
 # 로그인
 upbit = pyupbit.Upbit(upbit_access, upbit_secret)
 
+post_message("get_balance(\"KRW\"): {}".format(get_balance("KRW")))
+post_message("option_buy_percent: {}".format(option_buy_percent))
+post_message("1-FEE: {}".format(1-FEE))
 
-buy_amount = get_balance("KRW") * option_buy_percent * \
-    (1-FEE)  # 종목별 주문할 금액 [한화] (설정한 수수료 제외)
+
+buy_amount = calculate_buy_amount()  # 종목별 주문할 금액 계산
+
+setting_msg_post()  # 세팅값 출력, 슬랙 전송
+
+run_symbollist_predict_price(option_symbol_list)  # 설정한 모든 종목 Prophet 종가 예측
+schedule.every().hour.do(lambda: run_symbollist_predict_price(
+    option_symbol_list))  # 1시간마다 실행
 
 # 자동매매 시작
 while True:
@@ -243,6 +257,8 @@ while True:
                         code, coin_balance * (1-FEE))  # 설정한 수수료 제외
                     post_message("`전량 매도 (설정한 수수료 {}% 제외) : {}`".format(
                         (1-FEE)*100, str(sell_result)))
+
+                buy_amount = calculate_buy_amount()  # 종목별 주문할 금액 다시 계산
 
             time.sleep(1)
     except Exception as e:
