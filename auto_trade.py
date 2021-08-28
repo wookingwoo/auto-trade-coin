@@ -145,6 +145,9 @@ def setting_msg_post():
 
 # == main program ==
 
+minimum_order_amount = 5000  # 최소 주문 금액 (상수)
+FEE = 0.05 / 100   # 수수료 0.05% (상수)
+
 bought_list = []  # 매수 완료된 종목 리스트 초기화
 
 post_message(
@@ -163,7 +166,7 @@ upbit = pyupbit.Upbit(upbit_access, upbit_secret)
 
 
 buy_amount = get_balance("KRW") * option_buy_percent * \
-    0.9995  # 종목별 주문할 금액 [한화] (수수료 0.05% 제외)
+    (1-FEE)  # 종목별 주문할 금액 [한화] (수수료 0.05% 제외)
 
 # 자동매매 시작
 while True:
@@ -188,9 +191,9 @@ while True:
                 if target_price < current_price and ma15 < current_price and (predicted_close_price[code] / current_price * 100 - 100) >= 1:
                     print("{}가 매수 조건에 만족합니다.".format(code))
                     krw = get_balance("KRW")
-                    if krw > 5000:
+                    if krw > minimum_order_amount:
 
-                        if buy_amount > 5000:
+                        if buy_amount > minimum_order_amount:
 
                             if len(bought_list) < option_target_buy_count:
 
@@ -213,12 +216,12 @@ while True:
                                 print("{}개의 종목을 모두 매수 했기 때문에 pass합니다.".format(
                                     option_target_buy_count))
                         else:
-                            print("종목별 주문할 금액이 5000원 미만이기 때문에 {}를 메수하지 않습니다. (종목별 주문할 금액: {}원)".format(
-                                code, buy_amount))
+                            print("종목별 주문할 금액이 {}원 미만이기 때문에 {}를 메수하지 않습니다. (종목별 주문할 금액: {}원)".format(
+                                minimum_order_amount,   code, buy_amount))
 
                     else:
                         print(
-                            "잔고가 5000원 미만이기 때문에 {}를 메수하지 않습니다. (잔고: {}원)".format(code, krw))
+                            "잔고가 {}원 미만이기 때문에 {}를 메수하지 않습니다. (잔고: {}원)".format(minimum_order_amount, code, krw))
 
             # 08시50분00초 ~ 09시 00분 00초 (전량 매도)
             else:
@@ -232,11 +235,11 @@ while True:
                     current_krw_price  # 보유한 코인 평가금액 (원화 단위)
                 print("my_coin_balance_krw:", my_coin_balance_krw)
 
-                if my_coin_balance_krw > 5000 * 1.05:
+                if my_coin_balance_krw > minimum_order_amount * 1.05:
                     sell_result = upbit.sell_market_order(
-                        code, coin_balance * 0.9995)  # 수수료 (0.05%) 제외
-                    post_message("`전량 매도 (수수료 0.05% 제외) : " +
-                                 str(sell_result) + "`")
+                        code, coin_balance * (1-FEE))  # 수수료 (0.05%) 제외
+                    post_message("`전량 매도 (수수료 {}% 제외) : {}`".format(
+                        (1-FEE)*100, str(sell_result)))
 
             time.sleep(1)
     except Exception as e:
