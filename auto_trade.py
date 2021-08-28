@@ -255,8 +255,8 @@ while True:
                 if my_coin_balance_krw > minimum_order_amount * 1.05:
                     sell_result = upbit.sell_market_order(
                         code, coin_balance * (1-FEE))  # 설정한 수수료 제외
-                    post_message("`전량 매도 (설정한 수수료 {}% 제외) : {}`".format(
-                        (1-FEE)*100, str(sell_result)))
+                    post_message("`{} 전량 매도 (설정한 수수료 {}% 제외)` : {}".format(
+                        code, FEE*100, str(sell_result)))
 
                 buy_amount = calculate_buy_amount()  # 종목별 주문할 금액 다시 계산
 
