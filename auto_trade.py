@@ -215,7 +215,7 @@ while True:
                 print("매도 시간입니다.")
 
                 coin_balance = get_balance(code[4:])  # 보유한 코인 금액 (코인 단위)
-                price_KRW = pyupbit.get_current_price(option_symbol_list)
+                price_KRW = pyupbit.get_current_price([code])
                 current_krw_price = int(price_KRW[code])
 
                 my_coin_balance_krw = coin_balance * \
