@@ -17,11 +17,16 @@ upbit_secret = data.apiKey.upbit_secret
 slack_token = data.apiKey.slack_token
 slack_channel = data.apiKey.slack_channel
 
-# trade option
+# ===== trade option =====
+
+# 업비트 최소 주문 금액 (5000원)
+minimum_order_amount = data.coin_option.minimum_order_amount
+FEE = data.coin_option.fee  # 업비트 수수료 (0.0005 = 0.05%)
 option_symbol_list = data.coin_option.option_symbol_list  # 매수할 종목들
 option_target_buy_count = data.coin_option.option_target_buy_count  # 매수할 종목 수
 option_buy_percent = data.coin_option.option_buy_percent  # 총 주문 금액 비율
 K = data.coin_option.option_FLUCTUATION  # K값 (범위: 0~1)
+# ===== trade option =====
 
 
 def post_message(text, setDatetime=True):
@@ -145,8 +150,6 @@ def setting_msg_post():
 
 # == main program ==
 
-minimum_order_amount = 5000  # 최소 주문 금액 (상수)
-FEE = 0.05 / 100   # 수수료 0.05% (상수)
 
 bought_list = []  # 매수 완료된 종목 리스트 초기화
 
@@ -166,7 +169,7 @@ upbit = pyupbit.Upbit(upbit_access, upbit_secret)
 
 
 buy_amount = get_balance("KRW") * option_buy_percent * \
-    (1-FEE)  # 종목별 주문할 금액 [한화] (수수료 0.05% 제외)
+    (1-FEE)  # 종목별 주문할 금액 [한화] (설정한 수수료 제외)
 
 # 자동매매 시작
 while True:
@@ -237,8 +240,8 @@ while True:
 
                 if my_coin_balance_krw > minimum_order_amount * 1.05:
                     sell_result = upbit.sell_market_order(
-                        code, coin_balance * (1-FEE))  # 수수료 (0.05%) 제외
-                    post_message("`전량 매도 (수수료 {}% 제외) : {}`".format(
+                        code, coin_balance * (1-FEE))  # 설정한 수수료 제외
+                    post_message("`전량 매도 (설정한 수수료 {}% 제외) : {}`".format(
                         (1-FEE)*100, str(sell_result)))
 
             time.sleep(1)
