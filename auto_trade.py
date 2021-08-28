@@ -162,6 +162,9 @@ post_message("upbit api에 access 합니다.")
 upbit = pyupbit.Upbit(upbit_access, upbit_secret)
 
 
+buy_amount = get_balance("KRW") * option_buy_percent * \
+    0.9995  # 종목별 주문할 금액 [한화] (수수료 0.05% 제외)
+
 # 자동매매 시작
 while True:
     try:
@@ -187,28 +190,35 @@ while True:
                     krw = get_balance("KRW")
                     if krw > 5000:
 
-                        if len(bought_list) < option_target_buy_count:
+                        if buy_amount > 5000:
 
-                            if not (code in bought_list):
+                            if len(bought_list) < option_target_buy_count:
 
-                                buy_result = upbit.buy_market_order(
-                                    code, krw * option_buy_percent * 0.9995)  # 수수료 (0.05%) 제외
+                                if not (code in bought_list):
 
-                                bought_list.append(code)
-                                post_message("`{} 매수 완료!!` : {}".format(
-                                    code, str(buy_result)))
+                                    buy_result = upbit.buy_market_order(
+                                        code, buy_amount)  # 매수
 
-                                setting_msg_post()
+                                    bought_list.append(code)
+                                    post_message("`{} 매수 완료!!` : {}".format(
+                                        code, str(buy_result)))
+
+                                    setting_msg_post()
+
+                                else:
+                                    print(
+                                        "{}는 이미 매수한 종목이므로 pass합니다.".format(code))
 
                             else:
-                                print("{}는 이미 매수한 종목이므로 pass합니다.".format(code))
-
+                                print("{}개의 종목을 모두 매수 했기 때문에 pass합니다.".format(
+                                    option_target_buy_count))
                         else:
-                            print("{}개의 종목을 모두 매수 했기 때문에 pass합니다.".format(
-                                option_target_buy_count))
+                            print("종목별 주문할 금액이 5000원 미만이기 때문에 {}를 메수하지 않습니다. (종목별 주문할 금액: {}원)".format(
+                                code, buy_amount))
 
                     else:
-                        print("잔고가 5000원 미만이기 때문에 {}를 메수하지 않습니다.".format(code))
+                        print(
+                            "잔고가 5000원 미만이기 때문에 {}를 메수하지 않습니다. (잔고: {}원)".format(code, krw))
 
             # 08시50분00초 ~ 09시 00분 00초 (전량 매도)
             else:
