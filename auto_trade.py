@@ -144,16 +144,16 @@ def run_symbollist_predict_price(symbol_list):
 
 def setting_msg_post():
     global minimum_order_amount, FEE, option_symbol_list, option_target_buy_count, option_buy_percent, K, buy_amount, bought_list
-    post_message("<자동화 세팅값>\n설정 최소 주문 금액: {}원\n설정 수수료: {}%\n매수할 종목 후보({}개): {}\n매수할 종목 수: {}\n주문 금액 비율: {}\nK값 (범위:0~1): {}\n종목별 주문할 금액: {}원\n매수 완료한 종목: {}\n".format(
-        minimum_order_amount, FEE*100, len(option_symbol_list), option_symbol_list, option_target_buy_count, option_buy_percent, K, round(buy_amount, 2), bought_list))
+    post_message("<자동화 세팅값>\n설정 최소 주문 금액: {}원\n설정 수수료: {}%\n매수할 종목 후보({}개): {}\n매수할 종목 수: {}\n주문 금액 비율: {}\nK값 (범위:0~1): {}\n종목별 주문할 금액 (매일 다시 계산): {}원\n매수 완료한 종목: {}\n".format(
+        minimum_order_amount, FEE*100, len(option_symbol_list), option_symbol_list, option_target_buy_count, option_buy_percent, K, format(round(buy_amount, 2), ","), bought_list))
 
 
 def calculate_buy_amount():
 
     global option_buy_percent, FEE
 
-    amount = get_balance("KRW") * option_buy_percent * \
-        (1-FEE) * 0.95  # [한화] 종목별 주문할 금액  (설정한 수수료 제외, 5% 여유 남김)
+    # [한화] 종목별 주문할 금액  (설정한 수수료 제외, 5% 여유 남김)
+    amount = get_balance("KRW") * option_buy_percent * (1-FEE) * 0.95
 
     return amount
 
@@ -172,10 +172,7 @@ post_message("upbit api에 access 합니다.")
 # 로그인
 upbit = pyupbit.Upbit(upbit_access, upbit_secret)
 
-post_message("get_balance(\"KRW\"): {}".format(get_balance("KRW")))
-post_message("option_buy_percent: {}".format(option_buy_percent))
-post_message("1-FEE: {}".format(1-FEE))
-
+# post_message("get_balance(\"KRW\"): {}".format(get_balance("KRW")))
 
 buy_amount = calculate_buy_amount()  # 종목별 주문할 금액 계산
 
