@@ -144,8 +144,8 @@ def run_symbollist_predict_price(symbol_list):
 
 def setting_msg_post():
     global minimum_order_amount, FEE, option_symbol_list, option_target_buy_count, option_buy_percent, K, buy_amount, bought_list
-    post_message("<자동화 세팅값>\n설정 최소 주문 금액: {}원\n설정 수수료: {}%\n매수할 종목 후보({}개): {}\n매수할 종목 수: {}\n주문 금액 비율: {}\nK값 (범위:0~1): {}\n종목별 주문할 금액 (매일 다시 계산): {}원\n매수 완료한 종목: {}\n".format(
-        minimum_order_amount, FEE*100, len(option_symbol_list), option_symbol_list, option_target_buy_count, option_buy_percent, K, format(round(buy_amount, 2), ","), bought_list))
+    post_message("<자동화 세팅값>\n설정 최소 주문 금액: {}원\n설정 수수료: {}%\n매수할 종목 후보({}개): {}\n매수할 종목 수: {}개\n주문 금액 비율: {}\nK값 (범위:0~1): {}\n매수 완료한 종목: {}\n".format(
+        format(minimum_order_amount, ","), FEE*100, len(option_symbol_list), option_symbol_list, option_target_buy_count, option_buy_percent, K, bought_list))
 
 
 def calculate_buy_amount():
