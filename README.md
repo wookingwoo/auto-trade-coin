@@ -32,7 +32,9 @@ pip install pystan --upgrade
 
 ### Ubuntu 20.4
 
-- 4GB이상 RAM 필요 (AWS t2.medium 이상)
+- fbprophet 설치 환경: 4GB이상 RAM 필요 (AWS t2.medium 이상)
+
+- 동작 환경: AWS t3a.nano에서 정상 동작 확인
 
 ```sh
 sudo apt update
