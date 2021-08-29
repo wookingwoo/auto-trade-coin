@@ -2,13 +2,18 @@
 
 ## introduce source
 
+### main program
+
 auto_trade.py: 비트코인 자동매매 (변동성 돌파전략, 15일 이동 평균선, Prophet 종가 예측 적용)
+
+
+### test program
 
 back_test.py : 백테스팅
 
 best_K.py : optimal한 k값 찾기
 
-balanceInquiry.py: 현재 잔고 조회
+balance_inquiry.py: 현재 잔고 조회
 
 ## 참고 문서
 
