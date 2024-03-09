@@ -1,0 +1,10 @@
+.vscode
+.idea/
+__pycache__
+
+data
+log_data
+dd.xlsx
+~$dd.xlsx
+
+test.py
