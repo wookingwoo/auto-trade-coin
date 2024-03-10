@@ -1,5 +1,4 @@
 import os
-from dotenv import load_dotenv
 import pyupbit
 import pandas as pd
 import pandas_ta as ta
@@ -7,6 +6,10 @@ import json
 from openai import OpenAI
 import schedule
 import time
+
+from slack_bot import send_slack_message
+
+from dotenv import load_dotenv
 
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -98,9 +101,9 @@ def get_instructions(file_path):
             instructions = file.read()
         return instructions
     except FileNotFoundError:
-        print("File not found.")
+        send_slack_message("File not found.")
     except Exception as e:
-        print("An error occurred while reading the file:", e)
+        send_slack_message("An error occurred while reading the file:\n```{e}```")
 
 
 def analyze_data_with_gpt4(data_json):
@@ -108,10 +111,10 @@ def analyze_data_with_gpt4(data_json):
     try:
         instructions = get_instructions(gpt_prompt_path)
         if not instructions:
-            print("No instructions found.")
+            send_slack_message("No instructions found.")
 
         current_status = get_current_status()
-        print("current_status:", current_status)
+        send_slack_message(f"**current_status**\n```{current_status}```")
 
         response = client.chat.completions.create(
             model="gpt-4-turbo-preview",
@@ -124,7 +127,7 @@ def analyze_data_with_gpt4(data_json):
         )
         return response.choices[0].message.content
     except Exception as e:
-        print(f"Error in analyzing data with GPT-4: {e}")
+        send_slack_message(f"Error in analyzing data with GPT-4\n```{e}```")
         return None
 
 
@@ -134,9 +137,9 @@ def execute_buy():
         krw = upbit.get_balance("KRW")
         if krw > 5000:
             result = upbit.buy_market_order("KRW-BTC", krw * 0.9995)
-            print("Buy order successful:", result)
+            send_slack_message(f"**Buy order successful**\n```{result}```")
     except Exception as e:
-        print(f"Failed to execute buy order: {e}")
+        send_slack_message(f"**Failed to execute buy order**\n```{e}```")
 
 
 def execute_sell():
@@ -148,9 +151,9 @@ def execute_sell():
         ]
         if current_price * btc > 5000:
             result = upbit.sell_market_order("KRW-BTC", btc)
-            print("Sell order successful:", result)
+            send_slack_message(f"**Sell order successful**\n```{result}```")
     except Exception as e:
-        print(f"Failed to execute sell order: {e}")
+        send_slack_message(f"**Failed to execute sell order**\n```{e}```")
 
 
 def make_decision_and_execute():
@@ -163,13 +166,37 @@ def make_decision_and_execute():
         print(decision)
         if decision.get("decision") == "buy":
             execute_buy()
+            message_text = f"""
+**주식을 매수합니다.** :moneybag:
+- reason
+```{decision.get('reason')}```
+"""
         elif decision.get("decision") == "sell":
             execute_sell()
+            message_text = f"""
+**주식을 매도합니다.** :money_with_wings:
+- reason
+```{decision.get('reason')}```
+"""
+        elif decision.get("decision") == "hold":
+            message_text = f"""
+**주식을 보유합니다.** :eyes:
+- reason
+```{decision.get('reason')}```
+"""
+        else:
+            message_text = f"""
+**결정을 내릴 수 없습니다.** :thinking_face:
+- decision
+```{decision}```
+"""
+        send_slack_message(message_text)
     except Exception as e:
-        print(f"Failed to parse the advice as JSON: {e}")
+        send_slack_message(f"Failed to parse the advice as JSON: {e}")
 
 
 if __name__ == "__main__":
+    send_slack_message("주식 자동매매 봇을 시작합니다. :robot_face:")
     make_decision_and_execute()
     schedule.every().minute.do(make_decision_and_execute)
     # schedule.every().hour.do(make_decision_and_execute)
