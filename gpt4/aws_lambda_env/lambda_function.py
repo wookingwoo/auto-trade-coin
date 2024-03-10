@@ -1,5 +1,5 @@
 import sys
-from main import make_decision_and_execute
+from gpt4.main import make_decision_and_execute
 
 
 def handler(event, context):

@@ -8,7 +8,7 @@ import schedule
 import time
 import traceback
 
-from slack_bot import send_slack_message
+from gpt4.slack_bot import send_slack_message
 
 from dotenv import load_dotenv
 
