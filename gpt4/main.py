@@ -16,6 +16,7 @@ load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 UPBIT_ACCESS_KEY = os.getenv("UPBIT_ACCESS_KEY")
 UPBIT_SECRET_KEY = os.getenv("UPBIT_SECRET_KEY")
+GPT_MODEL = os.getenv("GPT_MODEL")
 
 # Setup
 client = OpenAI(api_key=OPENAI_API_KEY)
@@ -146,7 +147,7 @@ def analyze_data_with_gpt4(data_json):
         # send_slack_message(f"**current_status**\n```{current_status}```")
 
         response = client.chat.completions.create(
-            model="gpt-4-turbo-preview",
+            model=GPT_MODEL,
             messages=[
                 {"role": "system", "content": instructions},
                 {"role": "user", "content": data_json},
@@ -229,7 +230,7 @@ if __name__ == "__main__":
     send_slack_message("주식 자동매매 봇을 시작합니다. :robot_face:")
     make_decision_and_execute()
     # schedule.every().minute.do(make_decision_and_execute)
-    # schedule.every().hour.do(make_decision_and_execute)
+    schedule.every().hour.do(make_decision_and_execute)
 
     while True:
         schedule.run_pending()
