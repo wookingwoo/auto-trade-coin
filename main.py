@@ -6,6 +6,7 @@ import json
 from openai import OpenAI
 import schedule
 import time
+import traceback
 
 from slack_bot import send_slack_message
 
@@ -21,6 +22,30 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 upbit = pyupbit.Upbit(UPBIT_ACCESS_KEY, UPBIT_SECRET_KEY)
 
 
+# 한화로 환산한 총 보유 자산 (KRW, BTC 포함)
+def calculate_total_assets(json_data):
+    total_assets = 0
+    for entry in json_data:
+        if entry["currency"] == "KRW":
+            total_assets += float(entry["balance"])
+        if entry["currency"] == "BTC":
+            total_assets += float(entry["balance"]) * pyupbit.get_current_price(
+                "KRW-BTC"
+            )
+    return total_assets
+
+
+def format_json_to_slack(json_data):
+    formatted_message = "```"
+    for entry in json_data:
+        formatted_message += f"\nCurrency: {entry['currency']}\nBalance: {entry['balance']}\nLocked: {entry['locked']}\nAvg Buy Price: {entry['avg_buy_price']}\nAvg Buy Price Modified: {entry['avg_buy_price_modified']}\nUnit Currency: {entry['unit_currency']}\n"
+
+    formatted_message += "\n총 보유 금액: "
+    formatted_message += "{:,.2f}".format(calculate_total_assets(json_data))
+    formatted_message += "KRW\n```"
+    return formatted_message
+
+
 def get_current_status():
     orderbook = pyupbit.get_orderbook(ticker="KRW-BTC")
     current_time = orderbook["timestamp"]
@@ -28,6 +53,7 @@ def get_current_status():
     krw_balance = 0
     btc_avg_buy_price = 0
     balances = upbit.get_balances()
+    send_slack_message(format_json_to_slack(balances))
     for b in balances:
         if b["currency"] == "BTC":
             btc_balance = b["balance"]
@@ -103,7 +129,9 @@ def get_instructions(file_path):
     except FileNotFoundError:
         send_slack_message("File not found.")
     except Exception as e:
-        send_slack_message("An error occurred while reading the file:\n```{e}```")
+        send_slack_message(
+            ":bug: `An error occurred while reading the file`:\n```{e}```"
+        )
 
 
 def analyze_data_with_gpt4(data_json):
@@ -114,7 +142,8 @@ def analyze_data_with_gpt4(data_json):
             send_slack_message("No instructions found.")
 
         current_status = get_current_status()
-        send_slack_message(f"**current_status**\n```{current_status}```")
+        print("current_status:", current_status)
+        # send_slack_message(f"**current_status**\n```{current_status}```")
 
         response = client.chat.completions.create(
             model="gpt-4-turbo-preview",
@@ -127,7 +156,8 @@ def analyze_data_with_gpt4(data_json):
         )
         return response.choices[0].message.content
     except Exception as e:
-        send_slack_message(f"Error in analyzing data with GPT-4\n```{e}```")
+        send_slack_message(f":bug: `Error in analyzing data with GPT-4`\n```{e}```")
+        print(traceback.format_exc())
         return None
 
 
@@ -139,7 +169,7 @@ def execute_buy():
             result = upbit.buy_market_order("KRW-BTC", krw * 0.9995)
             send_slack_message(f"**Buy order successful**\n```{result}```")
     except Exception as e:
-        send_slack_message(f"**Failed to execute buy order**\n```{e}```")
+        send_slack_message(f"**:bug: `Failed to execute buy order**`\n```{e}```")
 
 
 def execute_sell():
@@ -153,7 +183,7 @@ def execute_sell():
             result = upbit.sell_market_order("KRW-BTC", btc)
             send_slack_message(f"**Sell order successful**\n```{result}```")
     except Exception as e:
-        send_slack_message(f"**Failed to execute sell order**\n```{e}```")
+        send_slack_message(f"**:bug: Failed to execute sell order**\n```{e}```")
 
 
 def make_decision_and_execute():
@@ -192,7 +222,7 @@ def make_decision_and_execute():
 """
         send_slack_message(message_text)
     except Exception as e:
-        send_slack_message(f"Failed to parse the advice as JSON: {e}")
+        send_slack_message(f":bug: `Failed to parse the advice as JSON`: {e}")
 
 
 if __name__ == "__main__":
