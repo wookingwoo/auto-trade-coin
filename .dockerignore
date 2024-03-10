@@ -1,0 +1,9 @@
+*.pyc
+.idea/
+venv/
+nohup.out
+.vscode
+__pycache__
+
+.env
+legacy_2021
