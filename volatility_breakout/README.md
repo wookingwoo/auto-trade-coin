@@ -1,6 +1,6 @@
 # auto-trade-coin
 
-## strategy
+## strategy: VolatilityBreakout + fbprophet
 
 1. 변동성 돌파 전략(Volatility Breakout)
 
