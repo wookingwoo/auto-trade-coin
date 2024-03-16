@@ -13,6 +13,3 @@ RUN pip install -r requirements.txt
 COPY . .
 
 CMD ["python3", "main.py"]
-
-# docker build -t auto-trade-coin-gpt:1.0 .
-# docker run auto-trade-coin-gpt:1.0
