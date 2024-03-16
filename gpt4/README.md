@@ -1,4 +1,6 @@
-# auto-trade-coin with gpt4
+# auto-trade-coin
+
+## strategy: LMM (gpt4)
 
 ## Docker build
 
@@ -6,5 +8,3 @@
 docker build -t auto-trade-coin-gpt:1.0 .
 docker run auto-trade-coin-gpt:1.0
 ```
-
-# strategy: LMM (gpt4)
