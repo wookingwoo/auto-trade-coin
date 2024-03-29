@@ -70,6 +70,7 @@ Example structure for JSON Data 2 (Current Investment State) is as follows:
 - **RSI_14**: The Relative Strength Index measures overbought or oversold conditions on a scale of 0 to 100. Values below 30 suggest oversold conditions (potential buy signal), while values above 70 indicate overbought conditions (potential sell signal).
 - **MACD**: Moving Average Convergence Divergence tracks the relationship between two moving averages of a price. A MACD crossing above its signal line suggests bullish momentum, whereas crossing below indicates bearish momentum.
 - **Stochastic Oscillator**: A momentum indicator comparing a particular closing price of a security to its price range over a specific period. It consists of two lines: %K (fast) and %D (slow). Readings above 80 indicate overbought conditions, while those below 20 suggest oversold conditions.
+- **Bollinger Bands**: A set of three lines: the middle is a 20-day average price, and the two outer lines adjust based on price volatility. The outer bands widen with more volatility and narrow when less. They help identify when prices might be too high (touching the upper band) or too low (touching the lower band), suggesting potential market moves.
 
 ### Clarification on Ask and Bid Prices
 
@@ -87,6 +88,7 @@ Example structure for JSON Data 2 (Current Investment State) is as follows:
 
 - **Factor in Transaction Fees**: Upbit charges a transaction fee of 0.05%. Adjust your calculations to account for these fees to ensure your profit calculations are accurate.
 - **Account for Market Slippage**: Especially relevant when large orders are placed. Analyze the orderbook to anticipate the impact of slippage on your transactions.
+- Remember, the first principle is not to lose money. The second principle: never forget the first principle.
 - Remember, successful investment strategies require balancing aggressive returns with careful risk assessment. Utilize a holistic view of market data, technical indicators, and current status to inform your strategies.
 - Consider setting predefined criteria for what constitutes a profitable strategy and the conditions under which penalties apply to refine the incentives for the analysis engine.
 - This task significantly impacts personal assets, requiring careful and strategic analysis.
