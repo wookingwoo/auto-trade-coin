@@ -1,0 +1,6 @@
+*.pyc
+.idea/
+venv/
+nohup.out
+.vscode
+__pycache__

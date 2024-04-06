@@ -1,0 +1,27 @@
+pipeline {
+    agent any
+    environment {
+        DOCKER_IMAGE = 'auto-trade-coin-gpt:2.0'
+    }
+    stages {
+        stage('Build') {
+            steps {
+                script {
+                    docker.build(env.DOCKER_IMAGE, '.')
+                }
+            }
+        }
+        stage('Test') {
+            steps {
+                // unit tests
+            }
+        }
+        stage('Run') {
+            steps {
+                script {
+                    docker.run("--name auto-trade-coin-gpt-v2 -d ${env.DOCKER_IMAGE}")
+                }
+            }
+        }
+    }
+}
