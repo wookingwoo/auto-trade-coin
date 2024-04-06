@@ -15,4 +15,4 @@ COPY . .
 RUN chmod +x /auto_trade_coin/start.sh
 
 EXPOSE 8501
-CMD ["/auto_trade_coin/start.sh"]
+CMD ["streamlit", "run", "streamlit_app.py"]
