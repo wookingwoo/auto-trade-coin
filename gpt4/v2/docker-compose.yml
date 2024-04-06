@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   auto-trade-coin-gpt-v2:
-    build .
+    build: .
     # image: auto-trade-coin-gpt:2.0
     # container_name: auto-trade-coin-gpt-v2
     environment:
