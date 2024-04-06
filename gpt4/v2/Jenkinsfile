@@ -20,18 +20,20 @@ pipeline {
         stage('Build and Deploy') {
             steps {
                 script {
+                    dir('gpt4/v2') {
                     // Docker Compose를 사용하여 이미지 빌드 및 서비스 배포
-                    withEnv([
-                        "OPENAI_API_KEY=${env.OPENAI_API_KEY}",
-                        "UPBIT_ACCESS_KEY=${env.UPBIT_ACCESS_KEY}",
-                        "UPBIT_SECRET_KEY=${env.UPBIT_SECRET_KEY}",
-                        "SERPAPI_API_KEY=${env.SERPAPI_API_KEY}",
-                        "SLACK_BOT_TOKEN=${env.SLACK_BOT_TOKEN}",
-                        "SLACK_APP_TOKEN=${env.SLACK_APP_TOKEN}",
-                        "SLACK_COINBOT_CHANNEL_NAME=${env.SLACK_COINBOT_CHANNEL_NAME}",
-                        "GPT_MODEL=${env.GPT_MODEL}"
-                    ]) {
-                        sh 'docker-compose up --build -d'
+                        withEnv([
+                            "OPENAI_API_KEY=${env.OPENAI_API_KEY}",
+                            "UPBIT_ACCESS_KEY=${env.UPBIT_ACCESS_KEY}",
+                            "UPBIT_SECRET_KEY=${env.UPBIT_SECRET_KEY}",
+                            "SERPAPI_API_KEY=${env.SERPAPI_API_KEY}",
+                            "SLACK_BOT_TOKEN=${env.SLACK_BOT_TOKEN}",
+                            "SLACK_APP_TOKEN=${env.SLACK_APP_TOKEN}",
+                            "SLACK_COINBOT_CHANNEL_NAME=${env.SLACK_COINBOT_CHANNEL_NAME}",
+                            "GPT_MODEL=${env.GPT_MODEL}"
+                        ]) {
+                            sh 'docker-compose up --build -d'
+                        }
                     }
                 }
             }
