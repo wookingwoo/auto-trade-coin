@@ -4,8 +4,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: auto-trade-coin-gpt:2.0
-    container_name: auto-trade-coin-gpt-v2
+    # image: auto-trade-coin-gpt:2.0
+    # container_name: auto-trade-coin-gpt-v2
     environment:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       UPBIT_ACCESS_KEY: ${UPBIT_ACCESS_KEY}
@@ -15,7 +15,7 @@ services:
       SLACK_APP_TOKEN: ${SLACK_APP_TOKEN}
       SLACK_COINBOT_CHANNEL_NAME: ${SLACK_COINBOT_CHANNEL_NAME}
       GPT_MODEL: ${GPT_MODEL}
-    restart: unless-stopped
+    # restart: unless-stopped
     working_dir: /auto_trade_coin
     volumes:
       - /auto_trade_coin:/auto_trade_coin
