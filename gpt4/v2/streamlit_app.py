@@ -6,7 +6,7 @@ import pyupbit
 
 
 def load_data():
-    db_path = "trading_decisions.sqlite"
+    db_path = "data/trading_decisions.sqlite"
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
         cursor.execute(

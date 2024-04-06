@@ -14,8 +14,8 @@ services:
       SLACK_COINBOT_CHANNEL_NAME: ${SLACK_COINBOT_CHANNEL_NAME}
       GPT_MODEL: ${GPT_MODEL}
     # restart: unless-stopped
-    # working_dir: /auto_trade_coin
-    # volumes:
-    #   - /auto_trade_coin:/auto_trade_coin
+    working_dir: /auto_trade_coin
+    volumes:
+      - ./data:/auto_trade_coin/data
     ports:
       - "8501:8501"
