@@ -21,7 +21,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh 'docker build -t auto-trade-coin-gpt:2.0 .'
+                    sh 'docker build -t auto-trade-coin-gpt:2.0 -f ./gpt4/v2/Dockerfile .'
                 }
             }
         }
@@ -30,7 +30,7 @@ pipeline {
                 script {
                     sh '''
                     docker run --name auto-trade-coin-gpt \\
-                    
+
                     -e OPENAI_API_KEY="${OPENAI_API_KEY}" \\
                     -e UPBIT_ACCESS_KEY="${UPBIT_ACCESS_KEY}" \\
                     -e UPBIT_SECRET_KEY="${UPBIT_SECRET_KEY}" \\
