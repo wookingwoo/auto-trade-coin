@@ -1,7 +1,6 @@
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
 import pyupbit
 import pandas as pd
 import pandas_ta as ta
@@ -14,6 +13,9 @@ from datetime import datetime
 import sqlite3
 
 from slack_bot import send_slack_message
+
+load_dotenv()
+GPT_MODEL = os.getenv("GPT_MODEL")
 
 # Setup
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -284,7 +286,7 @@ def analyze_data_with_gpt4(
             return None
 
         response = client.chat.completions.create(
-            model="gpt-4-turbo-preview",
+            model=GPT_MODEL,
             messages=[
                 {"role": "system", "content": instructions},
                 {"role": "user", "content": news_data},
@@ -370,21 +372,21 @@ def make_decision_and_execute():
                 if decision.get("decision") == "buy":
                     execute_buy(percentage)
                     message_text = f"""
-**비트코인을 {percentage}% 매수합니다.** :moneybag:
+비트코인을 *{percentage}% 매수* 합니다. :moneybag:
 - reason
 ```{decision.get('reason')}```
 """
                 elif decision.get("decision") == "sell":
                     execute_sell(percentage)
                     message_text = f"""
-**비트코인을 {percentage}% 매도합니다.** :money_with_wings:
+비트코인을 *{percentage}% 매도* 합니다. :money_with_wings:
 - reason
 ```{decision.get('reason')}```
 """
 
                 elif decision.get("decision") == "hold":
                     message_text = f"""
-**비트코인을 보유합니다.** :eyes:
+비트코인을 *보유* 합니다. :eyes:
 - reason
 ```{decision.get('reason')}```
 """
