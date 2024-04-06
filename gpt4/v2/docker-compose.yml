@@ -19,3 +19,4 @@ services:
       - ./data:/auto_trade_coin/data
     ports:
       - "8501:8501"
+    command: python3 autotrade.py
