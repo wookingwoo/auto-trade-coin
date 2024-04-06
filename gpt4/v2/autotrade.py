@@ -22,7 +22,7 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 upbit = pyupbit.Upbit(os.getenv("UPBIT_ACCESS_KEY"), os.getenv("UPBIT_SECRET_KEY"))
 
 
-def initialize_db(db_path="trading_decisions.sqlite"):
+def initialize_db(db_path="data/trading_decisions.sqlite"):
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
         cursor.execute(
@@ -44,7 +44,7 @@ def initialize_db(db_path="trading_decisions.sqlite"):
 
 
 def save_decision_to_db(decision, current_status):
-    db_path = "trading_decisions.sqlite"
+    db_path = "data/trading_decisions.sqlite"
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
 
@@ -77,7 +77,7 @@ def save_decision_to_db(decision, current_status):
         conn.commit()
 
 
-def fetch_last_decisions(db_path="trading_decisions.sqlite", num_decisions=10):
+def fetch_last_decisions(db_path="data/trading_decisions.sqlite", num_decisions=10):
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
         cursor.execute(

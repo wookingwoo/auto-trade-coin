@@ -2,4 +2,4 @@
 __pycache__
 
 .env
-trading_decisions.sqlite
+data/trading_decisions.sqlite
