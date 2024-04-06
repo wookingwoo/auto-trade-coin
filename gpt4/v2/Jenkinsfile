@@ -31,7 +31,7 @@ pipeline {
             steps {
                 script {
                     sh '''
-                    docker run --name auto-trade-coin-gpt \\
+                    docker run --name auto-trade-coin-gpt-v2 \\
                     -e OPENAI_API_KEY="${OPENAI_API_KEY}" \\
                     -e UPBIT_ACCESS_KEY="${UPBIT_ACCESS_KEY}" \\
                     -e UPBIT_SECRET_KEY="${UPBIT_SECRET_KEY}" \\
@@ -40,7 +40,7 @@ pipeline {
                     -e SLACK_APP_TOKEN="${SLACK_APP_TOKEN}" \\
                     -e SLACK_COINBOT_CHANNEL_NAME="${SLACK_COINBOT_CHANNEL_NAME}" \\
                     -e GPT_MODEL="${GPT_MODEL}" \\
-                    auto-trade-coin-gpt
+                    auto-trade-coin-gpt:2.0
                     '''
                 }
             }
