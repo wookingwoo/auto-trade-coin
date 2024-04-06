@@ -12,5 +12,7 @@ RUN pip install -r requirements.txt
 # Copy all codes
 COPY . .
 
+RUN chmod +x start.sh
+
 EXPOSE 8501
 CMD ["start.sh"]
