@@ -21,7 +21,9 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh 'docker build -t auto-trade-coin-gpt:2.0 -f ./gpt4/v2/Dockerfile .'
+                    dir('gpt4/v2') {
+                        sh 'docker build -t auto-trade-coin-gpt:2.0 .'
+                    }
                 }
             }
         }
