@@ -11,39 +11,40 @@ pipeline {
         GPT_MODEL = credentials('GPT_MODEL')
 }
     stages {
-        stage('Cleanup Docker Container') {
+        stage('Checkout') {
             steps {
-                script {
-                    sh 'docker rm -f auto-trade-coin-gpt-v2 || true'
-                }
+                // Git에서 소스 코드 체크아웃
+                checkout scm
             }
         }
-        stage('Build Docker Image') {
+        stage('Build and Deploy') {
             steps {
                 script {
-                    sh 'docker build -t auto-trade-coin-gpt:2.0 -f ./gpt4/v2/Dockerfile .'
-                }
-            }
-        }
-        stage('Run Docker Container') {
-            steps {
-                script {
-                    sh '''
-                    docker run --name auto-trade-coin-gpt \\
-
-                    -e OPENAI_API_KEY="${OPENAI_API_KEY}" \\
-                    -e UPBIT_ACCESS_KEY="${UPBIT_ACCESS_KEY}" \\
-                    -e UPBIT_SECRET_KEY="${UPBIT_SECRET_KEY}" \\
-                    -e SERPAPI_API_KEY="${SERPAPI_API_KEY}" \\
-                    -e SLACK_BOT_TOKEN="${SLACK_BOT_TOKEN}" \\
-                    -e SLACK_APP_TOKEN="${SLACK_APP_TOKEN}" \\
-                    -e SLACK_COINBOT_CHANNEL_NAME="${SLACK_COINBOT_CHANNEL_NAME}" \\
-                    -e GPT_MODEL="${GPT_MODEL}" \\
-
-                    auto-trade-coin-gpt
-                    '''
+                    dir('gpt4/v2') {
+                    // Docker Compose를 사용하여 이미지 빌드 및 서비스 배포
+                        withEnv([
+                            "OPENAI_API_KEY=${env.OPENAI_API_KEY}",
+                            "UPBIT_ACCESS_KEY=${env.UPBIT_ACCESS_KEY}",
+                            "UPBIT_SECRET_KEY=${env.UPBIT_SECRET_KEY}",
+                            "SERPAPI_API_KEY=${env.SERPAPI_API_KEY}",
+                            "SLACK_BOT_TOKEN=${env.SLACK_BOT_TOKEN}",
+                            "SLACK_APP_TOKEN=${env.SLACK_APP_TOKEN}",
+                            "SLACK_COINBOT_CHANNEL_NAME=${env.SLACK_COINBOT_CHANNEL_NAME}",
+                            "GPT_MODEL=${env.GPT_MODEL}"
+                        ]) {
+                            sh 'docker-compose up --build -d'
+                        }
+                    }
                 }
             }
         }
     }
+    // post {
+    //     always {
+    //         // 파이프라인의 모든 단계가 완료된 후 실행, Docker Compose를 사용하여 생성된 서비스 정리
+    //         script {
+    //             sh 'docker-compose down'
+    //         }
+    //     }
+    // }
 }

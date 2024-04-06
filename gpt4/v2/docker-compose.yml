@@ -1,0 +1,24 @@
+version: '3.8'
+services:
+  auto-trade-coin-gpt-v2:
+    build:
+      context: ./gpt4/v2
+      dockerfile: Dockerfile
+    image: auto-trade-coin-gpt:2.0
+    container_name: auto-trade-coin-gpt-v2
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      UPBIT_ACCESS_KEY: ${UPBIT_ACCESS_KEY}
+      UPBIT_SECRET_KEY: ${UPBIT_SECRET_KEY}
+      SERPAPI_API_KEY: ${SERPAPI_API_KEY}
+      SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN}
+      SLACK_APP_TOKEN: ${SLACK_APP_TOKEN}
+      SLACK_COINBOT_CHANNEL_NAME: ${SLACK_COINBOT_CHANNEL_NAME}
+      GPT_MODEL: ${GPT_MODEL}
+    restart: unless-stopped
+    working_dir: /auto_trade_coin
+    volumes:
+      - /auto_trade_coin:/auto_trade_coin
+    command: /bin/bash -c "streamlit run streamlit_app.py & python3 autotrade.py"
+    ports:
+      - "8501:8501"
