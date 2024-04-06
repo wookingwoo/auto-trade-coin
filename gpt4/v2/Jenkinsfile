@@ -1,20 +1,47 @@
 pipeline {
     agent any
     environment {
-        DOCKER_IMAGE = 'auto-trade-coin-gpt:2.0'
-    }
+        OPENAI_API_KEY = credentials('OPENAI_API_KEY')
+        UPBIT_ACCESS_KEY = credentials('UPBIT_ACCESS_KEY')
+        UPBIT_SECRET_KEY = credentials('UPBIT_SECRET_KEY')
+        SERPAPI_API_KEY = credentials('SERPAPI_API_KEY')
+        SLACK_BOT_TOKEN = credentials('SLACK_BOT_TOKEN')
+        SLACK_APP_TOKEN = credentials('SLACK_APP_TOKEN')
+        SLACK_COINBOT_CHANNEL_NAME = credentials('SLACK_COINBOT_CHANNEL_NAME')
+        GPT_MODEL = credentials('GPT_MODEL')
+}
     stages {
-        stage('Build') {
+        stage('Cleanup Docker Container') {
             steps {
                 script {
-                    docker.build(env.DOCKER_IMAGE, '.')
+                    sh 'docker rm -f auto-trade-coin-gpt-v2 || true'
                 }
             }
         }
-        stage('Run') {
+        stage('Build Docker Image') {
             steps {
                 script {
-                    docker.run("--name auto-trade-coin-gpt-v2 -d ${env.DOCKER_IMAGE}")
+                    sh 'docker build -t auto-trade-coin-gpt:2.0 .'
+                }
+            }
+        }
+        stage('Run Docker Container') {
+            steps {
+                script {
+                    sh '''
+                    docker run --name auto-trade-coin-gpt \\
+                    
+                    -e OPENAI_API_KEY="${OPENAI_API_KEY}" \\
+                    -e UPBIT_ACCESS_KEY="${UPBIT_ACCESS_KEY}" \\
+                    -e UPBIT_SECRET_KEY="${UPBIT_SECRET_KEY}" \\
+                    -e SERPAPI_API_KEY="${SERPAPI_API_KEY}" \\
+                    -e SLACK_BOT_TOKEN="${SLACK_BOT_TOKEN}" \\
+                    -e SLACK_APP_TOKEN="${SLACK_APP_TOKEN}" \\
+                    -e SLACK_COINBOT_CHANNEL_NAME="${SLACK_COINBOT_CHANNEL_NAME}" \\
+                    -e GPT_MODEL="${GPT_MODEL}" \\
+
+                    auto-trade-coin-gpt
+                    '''
                 }
             }
         }
