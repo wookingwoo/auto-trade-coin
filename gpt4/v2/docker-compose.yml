@@ -19,6 +19,6 @@ services:
     working_dir: /auto_trade_coin
     volumes:
       - /auto_trade_coin:/auto_trade_coin
-    command: /bin/bash -c "streamlit run streamlit_app.py & python3 autotrade.py"
+    command: /bin/bash -c "python3 autotrade.py & streamlit run streamlit_app.py"
     ports:
       - "8501:8501"
