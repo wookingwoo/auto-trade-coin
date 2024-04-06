@@ -196,20 +196,20 @@ def make_decision_and_execute():
         if decision.get("decision") == "buy":
             execute_buy()
             message_text = f"""
-**주식을 매수합니다.** :moneybag:
+**비트코인을 매수합니다.** :moneybag:
 - reason
 ```{decision.get('reason')}```
 """
         elif decision.get("decision") == "sell":
             execute_sell()
             message_text = f"""
-**주식을 매도합니다.** :money_with_wings:
+**비트코인을 매도합니다.** :money_with_wings:
 - reason
 ```{decision.get('reason')}```
 """
         elif decision.get("decision") == "hold":
             message_text = f"""
-**주식을 보유합니다.** :eyes:
+**비트코인을 보유합니다.** :eyes:
 - reason
 ```{decision.get('reason')}```
 """
