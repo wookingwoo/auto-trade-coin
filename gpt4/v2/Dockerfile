@@ -12,7 +12,5 @@ RUN pip install -r requirements.txt
 # Copy all codes
 COPY . .
 
-RUN chmod +x /auto_trade_coin/start.sh
-
 EXPOSE 8501
 CMD ["streamlit", "run", "streamlit_app.py"]
