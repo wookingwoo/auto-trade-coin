@@ -33,11 +33,10 @@ def main():
     st.set_page_config(layout="wide")
     st.title("wookingwoo Auto Trading Dashboard")
     st.write("- [GitHub](https://github.com/wookingwoo/auto-trade-coin)")
-    st.write("- 도움: [조코딩](https://youtu.be/MgatVqXXoeA)")
     st.write("---")
     df = load_data()
     if not df.empty:
-        start_value = 1000000
+        start_value = 883000
         current_price = pyupbit.get_orderbook(ticker="KRW-BTC")["orderbook_units"][0][
             "ask_price"
         ]
