@@ -52,7 +52,7 @@ def main():
         minutes = (time_diff.seconds % 3600) // 60
 
         st.header(
-            "수익률:"
+            "수익률: "
             + str(round((current_value - start_value) / start_value * 100, 2))
             + "%"
         )
