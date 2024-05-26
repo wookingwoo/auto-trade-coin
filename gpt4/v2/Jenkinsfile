@@ -20,8 +20,6 @@ pipeline {
         stage('Build and Deploy') {
             steps {
                 script {
-                    echo "GPT_MODEL: ${env.GPT_MODEL}"
-
                     dir('gpt4/v2') {
                         // Docker Compose를 사용하여 이미지 빌드 및 서비스 배포
                         withEnv([
