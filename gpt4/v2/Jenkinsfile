@@ -9,7 +9,7 @@ pipeline {
         SLACK_APP_TOKEN = credentials('SLACK_APP_TOKEN')
         SLACK_COINBOT_CHANNEL_NAME = credentials('SLACK_COINBOT_CHANNEL_NAME')
         GPT_MODEL = credentials('GPT_MODEL')
-}
+    }
     stages {
         stage('Checkout') {
             steps {
@@ -20,8 +20,10 @@ pipeline {
         stage('Build and Deploy') {
             steps {
                 script {
+                    echo "GPT_MODEL: ${env.GPT_MODEL}"
+
                     dir('gpt4/v2') {
-                    // Docker Compose를 사용하여 이미지 빌드 및 서비스 배포
+                        // Docker Compose를 사용하여 이미지 빌드 및 서비스 배포
                         withEnv([
                             "OPENAI_API_KEY=${env.OPENAI_API_KEY}",
                             "UPBIT_ACCESS_KEY=${env.UPBIT_ACCESS_KEY}",
@@ -39,12 +41,12 @@ pipeline {
             }
         }
     }
-    // post {
-    //     always {
-    //         // 파이프라인의 모든 단계가 완료된 후 실행, Docker Compose를 사용하여 생성된 서비스 정리
-    //         script {
-    //             sh 'docker-compose down'
-    //         }
-    //     }
-    // }
+// post {
+//     always {
+//         // 파이프라인의 모든 단계가 완료된 후 실행, Docker Compose를 사용하여 생성된 서비스 정리
+//         script {
+//             sh 'docker-compose down'
+//         }
+//     }
+// }
 }
