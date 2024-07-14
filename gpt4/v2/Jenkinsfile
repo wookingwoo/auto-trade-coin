@@ -32,7 +32,7 @@ pipeline {
                             "SLACK_COINBOT_CHANNEL_NAME=${env.SLACK_COINBOT_CHANNEL_NAME}",
                             "GPT_MODEL=${env.GPT_MODEL}"
                         ]) {
-                            sh 'docker-compose up --build -d'
+                            sh 'docker compose up --build -d'
                         }
                     }
                 }
