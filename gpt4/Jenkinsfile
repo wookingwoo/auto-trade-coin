@@ -28,9 +28,6 @@ pipeline {
             steps {
                 script {
                     dir('gpt4') {
-                        // data 폴더 생성
-                        sh 'mkdir -p data'
-                        
                         // Docker Compose를 사용하여 이미지 빌드 및 서비스 배포
                         withEnv([
                             "OPENAI_API_KEY=${env.OPENAI_API_KEY}",
