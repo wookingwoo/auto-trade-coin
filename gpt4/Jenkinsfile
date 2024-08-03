@@ -11,6 +11,13 @@ pipeline {
         GPT_MODEL = credentials('GPT_MODEL')
     }
     stages {
+         stage('Print Workspace') {
+                steps {
+                    script {
+                        echo "Workspace: ${env.WORKSPACE}"
+                    }
+                }
+            }
         stage('Checkout') {
             steps {
                 // Git에서 소스 코드 체크아웃
