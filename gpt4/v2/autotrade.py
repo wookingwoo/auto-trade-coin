@@ -30,6 +30,7 @@ def initialize_db(db_path="data/trading_decisions.sqlite"):
             CREATE TABLE IF NOT EXISTS decisions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 timestamp DATETIME,
+                ai_model TEXT,
                 decision TEXT,
                 percentage REAL,
                 reason TEXT,
@@ -50,12 +51,11 @@ def save_decision_to_db(decision, current_status):
 
         # Parsing current_status from JSON to Python dict
         status_dict = json.loads(current_status)
-        current_price = pyupbit.get_orderbook(ticker="KRW-BTC")["orderbook_units"][0][
-            "ask_price"
-        ]
+        current_price = pyupbit.get_orderbook(ticker="KRW-BTC")["orderbook_units"][0]["ask_price"]
 
         # Preparing data for insertion
         data_to_insert = (
+            GPT_MODEL,
             decision.get("decision"),
             decision.get("percentage", 100),  # Defaulting to 100 if not provided
             decision.get("reason", ""),  # Defaulting to an empty string if not provided
@@ -68,8 +68,8 @@ def save_decision_to_db(decision, current_status):
         # Inserting data into the database
         cursor.execute(
             """
-            INSERT INTO decisions (timestamp, decision, percentage, reason, btc_balance, krw_balance, btc_avg_buy_price, btc_krw_price)
-            VALUES (datetime('now', 'localtime'), ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO decisions (timestamp, ai_model, decision, percentage, reason, btc_balance, krw_balance, btc_avg_buy_price, btc_krw_price)
+            VALUES (datetime('now', 'localtime'), ?, ?, ?, ?, ?, ?, ?, ?)
         """,
             data_to_insert,
         )
@@ -185,8 +185,8 @@ def fetch_and_prepare_data():
 def get_news_data():
     ### Get news data from SERPAPI
     url = (
-        "https://serpapi.com/search.json?engine=google_news&q=btc&api_key="
-        + os.getenv("SERPAPI_API_KEY")
+            "https://serpapi.com/search.json?engine=google_news&q=btc&api_key="
+            + os.getenv("SERPAPI_API_KEY")
     )
 
     result = "No news data available."
@@ -276,7 +276,7 @@ def get_instructions(file_path):
 
 
 def analyze_data_with_gpt4(
-    news_data, data_json, last_decisions, fear_and_greed, current_status
+        news_data, data_json, last_decisions, fear_and_greed, current_status
 ):
     instructions_path = "instructions.md"
     try:
@@ -323,11 +323,9 @@ def execute_sell(percentage):
     try:
         btc_balance = upbit.get_balance("BTC")
         amount_to_sell = btc_balance * (percentage / 100)
-        current_price = pyupbit.get_orderbook(ticker="KRW-BTC")["orderbook_units"][0][
-            "ask_price"
-        ]
+        current_price = pyupbit.get_orderbook(ticker="KRW-BTC")["orderbook_units"][0]["ask_price"]
         if (
-            current_price * amount_to_sell > 5000
+                current_price * amount_to_sell > 5000
         ):  # Ensure the order is above the minimum threshold
             result = upbit.sell_market_order("KRW-BTC", amount_to_sell)
             send_slack_message("Sell order successful:", result)

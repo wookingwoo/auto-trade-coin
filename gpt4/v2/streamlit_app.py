@@ -17,6 +17,7 @@ def load_data():
             decisions,
             columns=[
                 "timestamp",
+                "ai_model",
                 "decision",
                 "percentage",
                 "reason",
