@@ -1,5 +1,0 @@
-.vscode
-__pycache__
-
-.env
-data/trading_decisions.sqlite

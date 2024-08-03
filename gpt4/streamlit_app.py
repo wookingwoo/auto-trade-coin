@@ -10,7 +10,7 @@ def load_data():
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT timestamp, decision, percentage, reason, btc_balance, krw_balance, btc_avg_buy_price, btc_krw_price FROM decisions ORDER BY timestamp"
+            "SELECT timestamp, ai_model, decision, percentage, reason, btc_balance, krw_balance, btc_avg_buy_price, btc_krw_price FROM decisions ORDER BY timestamp"
         )
         decisions = cursor.fetchall()
         df = pd.DataFrame(

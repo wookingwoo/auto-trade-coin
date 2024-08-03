@@ -1,2 +1,0 @@
-# 매 1시간마다 스크립트를 실행
-0 * * * * root /usr/bin/python3 /root/main.py
