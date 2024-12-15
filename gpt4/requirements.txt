@@ -1,5 +1,5 @@
 python-dotenv==1.0.1
-openai==1.13.3
+openai==1.57.4
 pyupbit==0.2.33
 PyJWT==2.8.0
 pandas==2.2.1
