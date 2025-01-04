@@ -2,7 +2,7 @@ import os
 import json
 import time
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
 from dotenv import load_dotenv
 from pymongo import MongoClient
 import pyupbit
@@ -30,7 +30,7 @@ def save_decision_to_db(decision, current_status):
     ]
 
     data_to_insert = {
-        "timestamp": datetime.now(),
+        "timestamp": datetime.now(timezone.utc),
         "ai_model": GPT_MODEL,
         "decision": decision.get("decision"),
         "percentage": decision.get("percentage", 100),
