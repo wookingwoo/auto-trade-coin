@@ -77,12 +77,12 @@ def main():
     st.header(f"수익률: {profit_rate}%")
     st.write(f"현재 시각: {datetime.now():%Y-%m-%d %H:%M:%S}")
     st.write("투자기간:", time_diff_str)
-    st.write("시작 원금", start_value, "원")
-    st.write("현재 비트코인 가격:", round(current_price), "원")
-    st.write("현재 보유 현금:", round(krw_balance), "원")
-    st.write("현재 보유 비트코인:", btc_balance, "BTC")
-    st.write("BTC 매수 평균가격:", round(btc_avg_buy_price), "원")
-    st.write("현재 원화 가치 평가:", current_value, "원")
+    st.write("시작 원금:", f"{start_value:,}원")
+    st.write("현재 비트코인 가격:", f"{round(current_price):,}원")
+    st.write("현재 보유 현금:", f"{round(krw_balance):,}원")
+    st.write("현재 보유 비트코인:", f"{btc_balance}BTC")
+    st.write("BTC 매수 평균가격:", f"{round(btc_avg_buy_price):,}원")
+    st.write("현재 원화 가치 평가:", f"{current_value:,}원")
 
     # 데이터프레임 출력
     st.dataframe(df, use_container_width=True)
