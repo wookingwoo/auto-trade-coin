@@ -9,15 +9,16 @@ pipeline {
         SLACK_APP_TOKEN = credentials('SLACK_APP_TOKEN')
         SLACK_COINBOT_CHANNEL_NAME = credentials('SLACK_COINBOT_CHANNEL_NAME')
         GPT_MODEL = credentials('GPT_MODEL')
+        MONGO_URI = credentials('MONGO_URI')
     }
     stages {
-         stage('Print Workspace') {
+        stage('Print Workspace') {
                 steps {
                     script {
                         echo "Workspace: ${env.WORKSPACE}"
                     }
                 }
-            }
+        }
         stage('Checkout') {
             steps {
                 // Git에서 소스 코드 체크아웃
@@ -37,7 +38,8 @@ pipeline {
                             "SLACK_BOT_TOKEN=${env.SLACK_BOT_TOKEN}",
                             "SLACK_APP_TOKEN=${env.SLACK_APP_TOKEN}",
                             "SLACK_COINBOT_CHANNEL_NAME=${env.SLACK_COINBOT_CHANNEL_NAME}",
-                            "GPT_MODEL=${env.GPT_MODEL}"
+                            "GPT_MODEL=${env.GPT_MODEL}",
+                            "MONGO_URI=${env.MONGO_URI}"
                         ]) {
                             sh 'docker compose up --build -d'
                         }
