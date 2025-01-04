@@ -9,3 +9,4 @@ streamlit==1.41.1
 slack-bolt==1.18.1
 setuptools==75.6.0
 pymongo==4.10.1
+plotly==5.24.1

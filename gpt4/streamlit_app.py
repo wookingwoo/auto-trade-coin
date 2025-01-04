@@ -5,6 +5,7 @@ import pyupbit
 from pymongo import MongoClient
 import os
 from dotenv import load_dotenv
+import plotly.graph_objects as go
 
 # Load environment variables
 load_dotenv()
@@ -96,6 +97,47 @@ def main():
         * 100
     )
     st.line_chart(df[["timestamp", "profit_rate"]].set_index("timestamp"))
+
+    # Add a Plotly graph for Bitcoin price with buy/sell markers
+    fig = go.Figure()
+
+    # Add line for Bitcoin price
+    fig.add_trace(
+        go.Scatter(
+            x=df["timestamp"], y=df["btc_krw_price"], mode="lines", name="BTC Price"
+        )
+    )
+
+    # Add markers for buy/sell decisions
+    buy_decisions = df[df["decision"] == "buy"]
+    sell_decisions = df[df["decision"] == "sell"]
+
+    fig.add_trace(
+        go.Scatter(
+            x=buy_decisions["timestamp"],
+            y=buy_decisions["btc_krw_price"],
+            mode="markers",
+            name="Buy",
+            marker=dict(color="green", size=3),
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=sell_decisions["timestamp"],
+            y=sell_decisions["btc_krw_price"],
+            mode="markers",
+            name="Sell",
+            marker=dict(color="red", size=3),
+        )
+    )
+
+    fig.update_layout(
+        title="Bitcoin Price with Buy/Sell Decisions",
+        xaxis_title="Time",
+        yaxis_title="Price (KRW)",
+    )
+
+    st.plotly_chart(fig)
 
     # 데이터프레임 출력
     st.dataframe(df, use_container_width=True)
