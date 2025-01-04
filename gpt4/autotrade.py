@@ -20,7 +20,7 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 upbit = pyupbit.Upbit(os.getenv("UPBIT_ACCESS_KEY"), os.getenv("UPBIT_SECRET_KEY"))
 mongo_client = MongoClient(MONGO_URI)
 db = mongo_client["autoTradeCoin"]
-decisions_collection = db["trades"]
+decisions_collection = db["decisions"]
 
 
 def save_decision_to_db(decision, current_status):
@@ -35,9 +35,9 @@ def save_decision_to_db(decision, current_status):
         "decision": decision.get("decision"),
         "percentage": decision.get("percentage", 100),
         "reason": decision.get("reason", ""),
-        "btc_balance": status_dict.get("btc_balance"),
-        "krw_balance": status_dict.get("krw_balance"),
-        "btc_avg_buy_price": status_dict.get("btc_avg_buy_price"),
+        "btc_balance": float(status_dict.get("btc_balance", 0)),
+        "krw_balance": float(status_dict.get("krw_balance", 0)),
+        "btc_avg_buy_price": float(status_dict.get("btc_avg_buy_price", 0)),
         "btc_krw_price": current_price,
     }
 
@@ -330,6 +330,8 @@ def make_decision_and_execute():
             message_text = f"비트코인을 *{percentage}% 매도* 합니다. :money_with_wings:\n- reason\n```{reason}```"
         elif decision_type == "hold":
             message_text = f"비트코인을 *보유* 합니다. :eyes:\n- reason\n```{reason}```"
+        else:
+            message_text = "No valid decision type provided."
 
         send_slack_message(message_text)
         save_decision_to_db(decision, current_status)
