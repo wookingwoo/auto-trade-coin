@@ -1,33 +1,40 @@
 import streamlit as st
-import sqlite3
 import pandas as pd
 from datetime import datetime
 import pyupbit
+from pymongo import MongoClient
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 
 def load_data():
-    db_path = "data/trading_decisions.sqlite"
-    with sqlite3.connect(db_path) as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT timestamp, ai_model, decision, percentage, reason, btc_balance, krw_balance, btc_avg_buy_price, btc_krw_price FROM decisions ORDER BY timestamp"
-        )
-        decisions = cursor.fetchall()
-        df = pd.DataFrame(
-            decisions,
-            columns=[
-                "timestamp",
-                "ai_model",
-                "decision",
-                "percentage",
-                "reason",
-                "btc_balance",
-                "krw_balance",
-                "btc_avg_buy_price",
-                "btc_krw_price",
-            ],
-        )
-        return df
+    MONGO_URI = os.getenv("MONGO_URI")
+    client = MongoClient(MONGO_URI)
+    db = client["autoTradeCoin"]
+    decisions_collection = db["decisions"]
+
+    decisions = list(decisions_collection.find().sort("timestamp", -1))
+    df = pd.DataFrame(decisions)
+
+    # Ensure the DataFrame has the correct columns
+    df = df[
+        [
+            "timestamp",
+            "ai_model",
+            "decision",
+            "percentage",
+            "reason",
+            "btc_balance",
+            "krw_balance",
+            "btc_avg_buy_price",
+            "btc_krw_price",
+        ]
+    ]
+
+    return df
 
 
 def main():
