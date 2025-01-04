@@ -1,65 +1,53 @@
 import os
-from dotenv import load_dotenv
-
-import pyupbit
-import pandas as pd
-import pandas_ta as ta
 import json
-from openai import OpenAI
 import time
 import requests
 from datetime import datetime
+from dotenv import load_dotenv
 from pymongo import MongoClient
-
+import pyupbit
+import pandas as pd
+import pandas_ta as ta
+from openai import OpenAI
 from slack_bot import send_slack_message
 
 load_dotenv()
 GPT_MODEL = os.getenv("GPT_MODEL")
+MONGO_URI = os.getenv("MONGO_URI")
 
 # Setup
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 upbit = pyupbit.Upbit(os.getenv("UPBIT_ACCESS_KEY"), os.getenv("UPBIT_SECRET_KEY"))
-
-# Setup MongoDB client
-MONGO_URI = os.getenv("MONGO_URI")
 mongo_client = MongoClient(MONGO_URI)
 db = mongo_client["autoTradeCoin"]
 decisions_collection = db["trades"]
 
 
 def save_decision_to_db(decision, current_status):
-    # Parsing current_status from JSON to Python dict
     status_dict = json.loads(current_status)
     current_price = pyupbit.get_orderbook(ticker="KRW-BTC")["orderbook_units"][0][
         "ask_price"
     ]
 
-    # Preparing data for insertion
     data_to_insert = {
         "timestamp": datetime.now(),
         "ai_model": GPT_MODEL,
         "decision": decision.get("decision"),
-        "percentage": decision.get(
-            "percentage", 100
-        ),  # Defaulting to 100 if not provided
-        "reason": decision.get(
-            "reason", ""
-        ),  # Defaulting to an empty string if not provided
+        "percentage": decision.get("percentage", 100),
+        "reason": decision.get("reason", ""),
         "btc_balance": status_dict.get("btc_balance"),
         "krw_balance": status_dict.get("krw_balance"),
         "btc_avg_buy_price": status_dict.get("btc_avg_buy_price"),
         "btc_krw_price": current_price,
     }
 
-    # Inserting data into the MongoDB collection
     decisions_collection.insert_one(data_to_insert)
 
 
 def fetch_last_decisions(num_decisions=10):
     decisions = decisions_collection.find().sort("timestamp", -1).limit(num_decisions)
-    formatted_decisions = []
-    for decision in decisions:
-        formatted_decision = {
+    formatted_decisions = [
+        {
             "timestamp": int(decision["timestamp"].timestamp() * 1000),
             "decision": decision["decision"],
             "percentage": decision["percentage"],
@@ -68,9 +56,12 @@ def fetch_last_decisions(num_decisions=10):
             "krw_balance": decision["krw_balance"],
             "btc_avg_buy_price": decision["btc_avg_buy_price"],
         }
-        formatted_decisions.append(str(formatted_decision))
+        for decision in decisions
+    ]
     return (
-        "\n".join(formatted_decisions) if formatted_decisions else "No decisions found."
+        "\n".join(map(str, formatted_decisions))
+        if formatted_decisions
+        else "No decisions found."
     )
 
 
@@ -146,11 +137,8 @@ def fetch_and_prepare_data():
 
 def get_news_data():
     ### Get news data from SERPAPI
-    url = (
-        "https://serpapi.com/search.json?engine=google_news&q=btc&api_key="
-        + os.getenv("SERPAPI_API_KEY")
-    )
 
+    url = f"https://serpapi.com/search.json?engine=google_news&q=btc&api_key={os.getenv('SERPAPI_API_KEY')}"
     result = "No news data available."
 
     try:
@@ -218,23 +206,22 @@ def fetch_fear_and_greed_index(limit=1, date_format=""):
     """
     base_url = "https://api.alternative.me/fng/"
     params = {"limit": limit, "format": "json", "date_format": date_format}
-    response = requests.get(base_url, params=params)
-    myData = response.json()["data"]
-    resStr = ""
-    for data in myData:
-        resStr += str(data)
-    return resStr
+    try:
+        response = requests.get(base_url, params=params)
+        return "".join(map(str, response.json().get("data", [])))
+    except Exception as e:
+        send_slack_message(f"Error fetching Fear and Greed Index: {e}")
+        return ""
 
 
 def get_instructions(file_path):
     try:
         with open(file_path, "r", encoding="utf-8") as file:
-            instructions = file.read()
-        return instructions
+            return file.read()
     except FileNotFoundError:
         send_slack_message("File not found.")
     except Exception as e:
-        send_slack_message("An error occurred while reading the file:", e)
+        send_slack_message(f"An error occurred while reading the file: {e}")
 
 
 def analyze_data_with_gpt4(
@@ -307,55 +294,47 @@ def make_decision_and_execute():
         current_status = get_current_status()
     except Exception as e:
         send_slack_message(f"Error: {e}")
-    else:
-        max_retries = 5
-        retry_delay_seconds = 5
-        decision = None
-        for attempt in range(max_retries):
-            try:
-                advice = analyze_data_with_gpt4(
-                    news_data, data_json, last_decisions, fear_and_greed, current_status
-                )
-                decision = json.loads(advice)
-                break
-            except json.JSONDecodeError as e:
-                send_slack_message(
-                    f"JSON parsing failed: {e}. Retrying in {retry_delay_seconds} seconds..."
-                )
-                time.sleep(retry_delay_seconds)
-                send_slack_message(f"Attempt {attempt + 2} of {max_retries}")
-        if not decision:
-            send_slack_message("Failed to make a decision after maximum retries.")
-            return
-        else:
-            try:
-                percentage = decision.get("percentage", 100)
+        return
 
-                if decision.get("decision") == "buy":
-                    execute_buy(percentage)
-                    message_text = f"""
-비트코인을 *{percentage}% 매수* 합니다. :moneybag:
-- reason
-```{decision.get('reason')}```
-"""
-                elif decision.get("decision") == "sell":
-                    execute_sell(percentage)
-                    message_text = f"""
-비트코인을 *{percentage}% 매도* 합니다. :money_with_wings:
-- reason
-```{decision.get('reason')}```
-"""
+    max_retries = 5
+    retry_delay_seconds = 5
+    decision = None
+    for attempt in range(max_retries):
+        try:
+            advice = analyze_data_with_gpt4(
+                news_data, data_json, last_decisions, fear_and_greed, current_status
+            )
+            decision = json.loads(advice)
+            break
+        except json.JSONDecodeError as e:
+            send_slack_message(
+                f"JSON parsing failed: {e}. Retrying in {retry_delay_seconds} seconds..."
+            )
+            time.sleep(retry_delay_seconds)
+            send_slack_message(f"Attempt {attempt + 2} of {max_retries}")
 
-                elif decision.get("decision") == "hold":
-                    message_text = f"""
-비트코인을 *보유* 합니다. :eyes:
-- reason
-```{decision.get('reason')}```
-"""
-                send_slack_message(message_text)
-                save_decision_to_db(decision, current_status)
-            except Exception as e:
-                send_slack_message(f"Failed to execute the decision or save to DB: {e}")
+    if not decision:
+        send_slack_message("Failed to make a decision after maximum retries.")
+        return
+
+    try:
+        percentage = decision.get("percentage", 100)
+        decision_type = decision.get("decision")
+        reason = decision.get("reason", "")
+
+        if decision_type == "buy":
+            execute_buy(percentage)
+            message_text = f"비트코인을 *{percentage}% 매수* 합니다. :moneybag:\n- reason\n```{reason}```"
+        elif decision_type == "sell":
+            execute_sell(percentage)
+            message_text = f"비트코인을 *{percentage}% 매도* 합니다. :money_with_wings:\n- reason\n```{reason}```"
+        elif decision_type == "hold":
+            message_text = f"비트코인을 *보유* 합니다. :eyes:\n- reason\n```{reason}```"
+
+        send_slack_message(message_text)
+        save_decision_to_db(decision, current_status)
+    except Exception as e:
+        send_slack_message(f"Failed to execute the decision or save to DB: {e}")
 
 
 if __name__ == "__main__":
