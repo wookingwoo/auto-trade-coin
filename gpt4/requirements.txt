@@ -8,3 +8,4 @@ schedule==1.2.1
 streamlit==1.33.0
 slack-bolt==1.18.1
 setuptools==75.6.0
+pymongo==4.10.1

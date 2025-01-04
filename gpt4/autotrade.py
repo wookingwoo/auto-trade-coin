@@ -6,11 +6,10 @@ import pandas as pd
 import pandas_ta as ta
 import json
 from openai import OpenAI
-import schedule
 import time
 import requests
 from datetime import datetime
-import sqlite3
+from pymongo import MongoClient
 
 from slack_bot import send_slack_message
 
@@ -21,95 +20,58 @@ GPT_MODEL = os.getenv("GPT_MODEL")
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 upbit = pyupbit.Upbit(os.getenv("UPBIT_ACCESS_KEY"), os.getenv("UPBIT_SECRET_KEY"))
 
-
-def initialize_db(db_path="data/trading_decisions.sqlite"):
-    with sqlite3.connect(db_path) as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS decisions (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                timestamp DATETIME,
-                ai_model TEXT,
-                decision TEXT,
-                percentage REAL,
-                reason TEXT,
-                btc_balance REAL,
-                krw_balance REAL,
-                btc_avg_buy_price REAL,
-                btc_krw_price REAL
-            );
-        """
-        )
-        conn.commit()
+# Setup MongoDB client
+MONGO_URI = os.getenv("MONGO_URI")
+mongo_client = MongoClient(MONGO_URI)
+db = mongo_client["autoTradeCoin"]
+decisions_collection = db["trades"]
 
 
 def save_decision_to_db(decision, current_status):
-    db_path = "data/trading_decisions.sqlite"
-    with sqlite3.connect(db_path) as conn:
-        cursor = conn.cursor()
+    # Parsing current_status from JSON to Python dict
+    status_dict = json.loads(current_status)
+    current_price = pyupbit.get_orderbook(ticker="KRW-BTC")["orderbook_units"][0][
+        "ask_price"
+    ]
 
-        # Parsing current_status from JSON to Python dict
-        status_dict = json.loads(current_status)
-        current_price = pyupbit.get_orderbook(ticker="KRW-BTC")["orderbook_units"][0]["ask_price"]
+    # Preparing data for insertion
+    data_to_insert = {
+        "timestamp": datetime.now(),
+        "ai_model": GPT_MODEL,
+        "decision": decision.get("decision"),
+        "percentage": decision.get(
+            "percentage", 100
+        ),  # Defaulting to 100 if not provided
+        "reason": decision.get(
+            "reason", ""
+        ),  # Defaulting to an empty string if not provided
+        "btc_balance": status_dict.get("btc_balance"),
+        "krw_balance": status_dict.get("krw_balance"),
+        "btc_avg_buy_price": status_dict.get("btc_avg_buy_price"),
+        "btc_krw_price": current_price,
+    }
 
-        # Preparing data for insertion
-        data_to_insert = (
-            GPT_MODEL,
-            decision.get("decision"),
-            decision.get("percentage", 100),  # Defaulting to 100 if not provided
-            decision.get("reason", ""),  # Defaulting to an empty string if not provided
-            status_dict.get("btc_balance"),
-            status_dict.get("krw_balance"),
-            status_dict.get("btc_avg_buy_price"),
-            current_price,
-        )
-
-        # Inserting data into the database
-        cursor.execute(
-            """
-            INSERT INTO decisions (timestamp, ai_model, decision, percentage, reason, btc_balance, krw_balance, btc_avg_buy_price, btc_krw_price)
-            VALUES (datetime('now', 'localtime'), ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-            data_to_insert,
-        )
-
-        conn.commit()
+    # Inserting data into the MongoDB collection
+    decisions_collection.insert_one(data_to_insert)
 
 
-def fetch_last_decisions(db_path="data/trading_decisions.sqlite", num_decisions=10):
-    with sqlite3.connect(db_path) as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            """
-            SELECT timestamp, decision, percentage, reason, btc_balance, krw_balance, btc_avg_buy_price FROM decisions
-            ORDER BY timestamp DESC
-            LIMIT ?
-        """,
-            (num_decisions,),
-        )
-        decisions = cursor.fetchall()
-
-        if decisions:
-            formatted_decisions = []
-            for decision in decisions:
-                # Converting timestamp to milliseconds since the Unix epoch
-                ts = datetime.strptime(decision[0], "%Y-%m-%d %H:%M:%S")
-                ts_millis = int(ts.timestamp() * 1000)
-
-                formatted_decision = {
-                    "timestamp": ts_millis,
-                    "decision": decision[1],
-                    "percentage": decision[2],
-                    "reason": decision[3],
-                    "btc_balance": decision[4],
-                    "krw_balance": decision[5],
-                    "btc_avg_buy_price": decision[6],
-                }
-                formatted_decisions.append(str(formatted_decision))
-            return "\n".join(formatted_decisions)
-        else:
-            return "No decisions found."
+def fetch_last_decisions(num_decisions=10):
+    decisions = decisions_collection.find().sort("timestamp", -1).limit(num_decisions)
+    formatted_decisions = []
+    for decision in decisions:
+        formatted_decision = {
+            "timestamp": int(decision["timestamp"].timestamp() * 1000),
+            "decision": decision["decision"],
+            "percentage": decision["percentage"],
+            "reason": decision["reason"],
+            "btc_balance": decision["btc_balance"],
+            "krw_balance": decision["krw_balance"],
+            "btc_avg_buy_price": decision["btc_avg_buy_price"],
+        }
+        formatted_decisions.append(str(formatted_decision))
+    return (
+        "\n".join(formatted_decisions) if formatted_decisions else "No decisions found."
+    )
 
 
 def get_current_status():
@@ -185,8 +147,8 @@ def fetch_and_prepare_data():
 def get_news_data():
     ### Get news data from SERPAPI
     url = (
-            "https://serpapi.com/search.json?engine=google_news&q=btc&api_key="
-            + os.getenv("SERPAPI_API_KEY")
+        "https://serpapi.com/search.json?engine=google_news&q=btc&api_key="
+        + os.getenv("SERPAPI_API_KEY")
     )
 
     result = "No news data available."
@@ -276,7 +238,7 @@ def get_instructions(file_path):
 
 
 def analyze_data_with_gpt4(
-        news_data, data_json, last_decisions, fear_and_greed, current_status
+    news_data, data_json, last_decisions, fear_and_greed, current_status
 ):
     instructions_path = "instructions.md"
     try:
@@ -323,9 +285,11 @@ def execute_sell(percentage):
     try:
         btc_balance = upbit.get_balance("BTC")
         amount_to_sell = btc_balance * (percentage / 100)
-        current_price = pyupbit.get_orderbook(ticker="KRW-BTC")["orderbook_units"][0]["ask_price"]
+        current_price = pyupbit.get_orderbook(ticker="KRW-BTC")["orderbook_units"][0][
+            "ask_price"
+        ]
         if (
-                current_price * amount_to_sell > 5000
+            current_price * amount_to_sell > 5000
         ):  # Ensure the order is above the minimum threshold
             result = upbit.sell_market_order("KRW-BTC", amount_to_sell)
             send_slack_message("Sell order successful:", result)
@@ -396,5 +360,4 @@ def make_decision_and_execute():
 
 if __name__ == "__main__":
     send_slack_message(f"주식 자동매매 봇을 시작합니다. :gpt: {GPT_MODEL}")
-    initialize_db()
     make_decision_and_execute()
