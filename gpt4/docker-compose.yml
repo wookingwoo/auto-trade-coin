@@ -13,6 +13,7 @@ services:
       SLACK_APP_TOKEN: ${SLACK_APP_TOKEN}
       SLACK_COINBOT_CHANNEL_NAME: ${SLACK_COINBOT_CHANNEL_NAME}
       GPT_MODEL: ${GPT_MODEL}
+      MONGO_URI: ${MONGO_URI}
     restart: unless-stopped
     working_dir: /auto_trade_coin
     volumes:
@@ -26,4 +27,3 @@ services:
 networks:
   wookingwoo-op-bridge:
     external: true
-  
