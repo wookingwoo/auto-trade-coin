@@ -6,6 +6,7 @@ from pymongo import MongoClient
 import os
 from dotenv import load_dotenv
 import plotly.graph_objects as go
+import pytz
 
 # Load environment variables
 load_dotenv()
@@ -19,6 +20,12 @@ def load_data():
 
     decisions = list(decisions_collection.find().sort("timestamp", -1))
     df = pd.DataFrame(decisions)
+
+    # Convert timestamp to timezone-aware datetime
+    timezone = pytz.timezone("Asia/Seoul")
+    df["timestamp"] = (
+        pd.to_datetime(df["timestamp"]).dt.tz_localize("UTC").dt.tz_convert(timezone)
+    )
 
     # Ensure the DataFrame has the correct columns
     df = df[
@@ -45,7 +52,9 @@ def calculate_profit(current_price, btc_balance, krw_balance, start_value):
 
 
 def format_time_diff(timestamp):
-    time_diff = datetime.now() - pd.to_datetime(timestamp)
+    timezone = pytz.timezone("Asia/Seoul")
+    now = datetime.now(timezone)
+    time_diff = now - timestamp
     days, seconds = time_diff.days, time_diff.seconds
     hours = seconds // 3600
     minutes = (seconds % 3600) // 60
@@ -79,9 +88,13 @@ def main():
     )
     time_diff_str = format_time_diff(df.iloc[-1]["timestamp"])
 
+    # Set the timezone
+    timezone = pytz.timezone("Asia/Seoul")
+    current_time = datetime.now(timezone)
+
     # UI 표시
     st.header(f"수익률: {profit_rate}%")
-    st.write(f"현재 시각: {datetime.now():%Y-%m-%d %H:%M:%S}")
+    st.write(f"현재 시각: {current_time:%Y-%m-%d %H:%M:%S %Z%z}")
     st.write("투자기간:", time_diff_str)
     st.write("시작 원금:", f"{start_value:,}원")
     st.write("현재 비트코인 가격:", f"{round(current_price):,}원")
