@@ -1,0 +1,3 @@
+python-dotenv==1.0.1
+openai==1.57.4
+python-bithumb==0.1.0
