@@ -1,4 +1,4 @@
-# Auto-Trade-Coin
+# UPbit LMM (gpt-4o)
 
 ## Overview
 

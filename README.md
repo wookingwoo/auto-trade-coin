@@ -8,11 +8,11 @@ Auto-Trade-Coin is an automated cryptocurrency trading bot designed to optimize 
 
 1. **Volatility Breakout Strategy + fbprophet**
    - This strategy uses the Volatility Breakout method combined with the fbprophet library to predict closing prices. It aims to capitalize on significant price movements by setting breakout signals based on daily volatility.
-   - [Learn more](https://github.com/wookingwoo/auto-trade-coin/tree/main/volatility_breakout)
+   - [Learn more](https://github.com/wookingwoo/auto-trade-coin/tree/develop/volatility_breakout)
 
 2. **UPbit LMM (OpenAI)**
    - Utilizes OpenAI's language model to analyze market data and make trading decisions on the UPbit exchange. This strategy focuses on optimizing trades for the KRW-BTC pair using AI-driven insights.
-   - [Learn more](https://github.com/wookingwoo/auto-trade-coin/tree/main/gpt4)
+   - [Learn more](https://github.com/wookingwoo/auto-trade-coin/tree/develop/gpt4)
 
 3. **Bithumb LMM (DeepSeek)**
    - Similar to the UPbit strategy, this approach uses DeepSeek's language model to interact with the Bithumb API. It fetches market data and makes trading decisions to optimize trading outcomes.
