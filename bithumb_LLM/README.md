@@ -55,3 +55,11 @@ This project is designed to interact with the Bithumb API to fetch various marke
 ## License
 
 This project is licensed under the MIT License.
+
+## Contributing
+
+Contributions are welcome! Please fork the repository and submit a pull request for any enhancements or bug fixes.
+
+## Contact
+
+For any inquiries or support, please contact [contact@wookingwoo.com](mailto:contact@wookingwoo.com).
