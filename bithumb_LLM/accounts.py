@@ -27,13 +27,6 @@ def get_accounts(access_key, secret_key):
         print(err)
 
 
-def get_simbol_accounts(bithumb_access_key, bithumb_secret_key, simbol):
-    status_code, accounts = get_accounts(bithumb_access_key, bithumb_secret_key)
-    if status_code == 200:
-        return [account for account in accounts if account["currency"] == simbol]
-    return []
-
-
 if __name__ == "__main__":
     import os
     from dotenv import load_dotenv
@@ -48,8 +41,3 @@ if __name__ == "__main__":
 
     print("status_code>>>>", status_code)
     print("accounts>>>>", accounts)
-
-    simbol_accounts = get_simbol_accounts(
-        bithumb_access_key, bithumb_secret_key, SIMBOL
-    )
-    print(f"{SIMBOL} accounts>>>>", simbol_accounts)

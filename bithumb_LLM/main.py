@@ -8,8 +8,7 @@ from deepseek_decision import get_trading_decision
 from order_execution import execute_order
 import os
 from dotenv import load_dotenv
-from config import MARKET, SIMBOL
-from accounts import get_simbol_accounts
+from config import MARKET
 from order_chance import get_order_chance
 
 # Load environment variables
@@ -33,17 +32,17 @@ def main():
     ticker_data = fetch_ticker()
     orderbook_data = fetch_orderbook()
 
-    status_code, chance = get_order_chance(
+    status_code, order_chance = get_order_chance(
         bithumb_access_key, bithumb_secret_key, MARKET
     )
 
     if status_code != 200:
-        print("Error getting order chance:", chance)
+        print("Error getting order chance:", order_chance)
         return
 
     # Define maker fees
-    maker_bid_fee = chance["maker_bid_fee"]
-    maker_ask_fee = chance["maker_ask_fee"]
+    maker_bid_fee = order_chance["maker_bid_fee"]
+    maker_ask_fee = order_chance["maker_ask_fee"]
 
     # Read prompt from file
     with open("prompt.md", "r", encoding="utf-8") as file:
@@ -75,21 +74,22 @@ def main():
         price = ticker_data[0]["trade_price"]  # Use closing price (current price)
 
         # Determine account type and price adjustment based on decision
-        account_currency = "KRW" if decision["decision"] == "buy" else SIMBOL
         price_multiplier = 1.05 if decision["decision"] == "buy" else 0.95
 
-        # Fetch account balance and calculate volume
-        simbol_accounts = get_simbol_accounts(
-            bithumb_access_key, bithumb_secret_key, account_currency
-        )
-        balance = float(simbol_accounts[0]["balance"])
-        volume = int(
-            balance
-            * decision["percentage"]
-            / (price if decision["decision"] == "buy" else 1)
-        )
+        volume = 0
 
-        # Adjust price
+        if decision["decision"] == "buy":
+            volume = (
+                float(order_chance["bid_account"]["balance"])
+                / price
+                * decision["percentage"]
+            )
+
+        elif decision["decision"] == "sell":
+            volume = (
+                float(order_chance["ask_account"]["balance"]) * decision["percentage"]
+            )
+
         price = int(price * price_multiplier)
 
         print("volume(주문량):", volume)
