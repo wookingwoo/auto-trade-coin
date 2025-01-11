@@ -14,7 +14,7 @@ from order_chance import get_order_chance
 # Load environment variables
 load_dotenv()
 
-data_count = 1
+data_count = 30
 
 
 def main():

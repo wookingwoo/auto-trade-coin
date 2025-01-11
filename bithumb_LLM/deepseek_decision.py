@@ -27,7 +27,10 @@ def get_trading_decision(api_key, user_message):
     response = client.chat.completions.create(
         model="deepseek-chat",
         messages=[
-            {"role": "system", "content": "You are a helpful assistant"},
+            {
+                "role": "system",
+                "content": "You are a financial expert assistant. Analyze the provided market data thoroughly and offer a well-reasoned decision on whether to buy, sell, or hold. Consider all relevant factors, including market trends and fees, to maximize the user's financial benefit.",
+            },
             {"role": "user", "content": user_message},
         ],
         stream=False,
