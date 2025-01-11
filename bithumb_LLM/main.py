@@ -10,6 +10,7 @@ import os
 from dotenv import load_dotenv
 from config import MARKET, SIMBOL
 from accounts import get_simbol_accounts
+from order_chance import get_order_chance
 
 # Load environment variables
 load_dotenv()
@@ -18,7 +19,12 @@ data_count = 1
 
 
 def main():
-    # Example usage
+
+    # Get account balance
+    bithumb_access_key = os.getenv("BITHUMB_API_KEY")
+    bithumb_secret_key = os.getenv("BITHUMB_SECRET_KEY")
+
+    # Get coin data
     minute_candle_data = fetch_candle_data("minutes/60", data_count)
     day_candle_data = fetch_candle_data("days", data_count)
     week_candle_data = fetch_candle_data("weeks", data_count)
@@ -26,6 +32,18 @@ def main():
     tick_data = fetch_recent_trades(data_count)
     ticker_data = fetch_ticker()
     orderbook_data = fetch_orderbook()
+
+    status_code, chance = get_order_chance(
+        bithumb_access_key, bithumb_secret_key, MARKET
+    )
+
+    if status_code != 200:
+        print("Error getting order chance:", chance)
+        return
+
+    # Define maker fees
+    maker_bid_fee = chance["maker_bid_fee"]
+    maker_ask_fee = chance["maker_ask_fee"]
 
     # Read prompt from file
     with open("prompt.md", "r", encoding="utf-8") as file:
@@ -40,16 +58,16 @@ def main():
         tick_data=tick_data,
         ticker_data=ticker_data,
         orderbook_data=orderbook_data,
+        maker_bid_fee=maker_bid_fee,
+        maker_ask_fee=maker_ask_fee,
     )
+
+    print("user_message>>>", user_message)
 
     # Get trading decision from DeepSeek
     deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")
     decision = get_trading_decision(deepseek_api_key, user_message)
     print("Trading Decision:", decision)
-
-    # Get account balance
-    bithumb_access_key = os.getenv("BITHUMB_API_KEY")
-    bithumb_secret_key = os.getenv("BITHUMB_SECRET_KEY")
 
     # Execute order based on decision
     if decision["decision"] in ["buy", "sell"]:

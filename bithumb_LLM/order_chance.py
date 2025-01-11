@@ -50,7 +50,9 @@ if __name__ == "__main__":
     bithumb_access_key = os.getenv("BITHUMB_API_KEY")
     bithumb_secret_key = os.getenv("BITHUMB_SECRET_KEY")
 
-    get_order_chance(bithumb_access_key, bithumb_secret_key, MARKET)
+    status_code, chance = get_order_chance(
+        bithumb_access_key, bithumb_secret_key, MARKET
+    )
 
     print("status_code>>>>", status_code)
-    print("accounts>>>>", accounts)
+    print("chance>>>>", chance)

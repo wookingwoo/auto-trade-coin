@@ -9,6 +9,8 @@ Market Data:
 - Tick Data: {tick_data}
 - Ticker Data: {ticker_data}
 - Orderbook Data: {orderbook_data}
+- Maker Bid Fee: {maker_bid_fee}
+- Maker Ask Fee: {maker_ask_fee}
 
 Return the decision in JSON format with the following structure:
 
