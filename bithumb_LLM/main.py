@@ -82,12 +82,12 @@ def main():
             volume = (
                 float(order_chance["bid_account"]["balance"])
                 / price
-                * decision["percentage"]
+                * decision["trade_ratio"]
             )
 
         elif decision["decision"] == "sell":
             volume = (
-                float(order_chance["ask_account"]["balance"]) * decision["percentage"]
+                float(order_chance["ask_account"]["balance"]) * decision["trade_ratio"]
             )
 
         price = int(price * price_multiplier)

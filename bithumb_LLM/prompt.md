@@ -16,6 +16,6 @@ Return the decision in JSON format with the following structure:
 
 ```json
   "decision": "buy/sell/hold",
-  "percentage": 0.0,
+  "trade_ratio": 0.0,
   "reasoning": "Your reasoning here"
 ```
