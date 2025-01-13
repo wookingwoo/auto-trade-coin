@@ -79,6 +79,7 @@ def main():
         volume = 0
 
         if decision["decision"] == "buy":
+            print(f"{MARKET}을 매수합니다.")
             volume = (
                 float(order_chance["bid_account"]["balance"])
                 / price
@@ -86,6 +87,7 @@ def main():
             )
 
         elif decision["decision"] == "sell":
+            print(f"{MARKET}을 매도합니다.")
             volume = (
                 float(order_chance["ask_account"]["balance"]) * decision["trade_ratio"]
             )
