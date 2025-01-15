@@ -340,5 +340,7 @@ def make_decision_and_execute():
 
 
 if __name__ == "__main__":
-    send_slack_message(f"주식 자동매매 봇을 시작합니다. :gpt: {GPT_MODEL}")
+    send_slack_message(
+        f"코인 자동매매 봇을 시작합니다. :bank: UPbit, :gpt: {GPT_MODEL}"
+    )
     make_decision_and_execute()

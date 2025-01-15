@@ -10,9 +10,12 @@ import os
 from dotenv import load_dotenv
 from config import MARKET
 from order_chance import get_order_chance
+from slack_bot import send_slack_message
+
 
 # Load environment variables
 load_dotenv()
+LLM_MODEL = os.getenv("LLM_MODEL")
 
 data_count = 30
 
@@ -37,7 +40,7 @@ def main():
     )
 
     if status_code != 200:
-        print("Error getting order chance:", order_chance)
+        send_slack_message(f"Error getting order chance: {order_chance}")
         return
 
     # Define maker fees
@@ -64,9 +67,8 @@ def main():
     print("user_message>>>", user_message)
 
     # Get trading decision from DeepSeek
-    deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")
-    decision = get_trading_decision(deepseek_api_key, user_message)
-    print("Trading Decision:", decision)
+    decision = get_trading_decision(user_message)
+    send_slack_message(f"Trading Decision: {decision}")
 
     # Execute order based on decision
     if decision["decision"] in ["buy", "sell"]:
@@ -79,7 +81,7 @@ def main():
         volume = 0
 
         if decision["decision"] == "buy":
-            print(f"{MARKET}을 매수합니다.")
+            send_slack_message(f"{MARKET}을 매수합니다.")
             volume = (
                 float(order_chance["bid_account"]["balance"])
                 / price
@@ -87,15 +89,15 @@ def main():
             )
 
         elif decision["decision"] == "sell":
-            print(f"{MARKET}을 매도합니다.")
+            send_slack_message(f"{MARKET}을 매도합니다.")
             volume = (
                 float(order_chance["ask_account"]["balance"]) * decision["trade_ratio"]
             )
 
         price = int(price * price_multiplier)
 
-        print("volume(주문량):", volume)
-        print("price(주문가격):", price)
+        send_slack_message("volume(주문량):", volume)
+        send_slack_message("price(주문가격):", price)
 
         execute_order(
             bithumb_access_key, bithumb_secret_key, MARKET, side, volume, price
@@ -103,4 +105,5 @@ def main():
 
 
 if __name__ == "__main__":
+    send_slack_message(f"코인 자동매매 봇을 시작합니다. :bank: bithumb, {LLM_MODEL}")
     main()

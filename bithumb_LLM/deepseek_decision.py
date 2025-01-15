@@ -1,6 +1,13 @@
 from openai import OpenAI
 import json
 import re
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
+LLM_MODEL = os.getenv("LLM_MODEL")
 
 
 def parse_json_content(response_content):
@@ -18,14 +25,14 @@ def parse_json_content(response_content):
         raise ValueError(f"Error decoding JSON: {str(e)}")
 
 
-def get_trading_decision(api_key, user_message):
+def get_trading_decision(user_message):
     """
     Uses DeepSeek API to get a trading decision based on user input.
     """
-    client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
+    client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url="https://api.deepseek.com")
 
     response = client.chat.completions.create(
-        model="deepseek-chat",
+        model=LLM_MODEL,
         messages=[
             {
                 "role": "system",
