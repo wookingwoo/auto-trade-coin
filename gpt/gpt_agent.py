@@ -32,22 +32,14 @@ def get_instructions(file_path="instructions.md"):
 def replace_placeholders(instructions, bitcoin_context):
     """Replace placeholders in the instructions with actual data."""
     if bitcoin_context:
-        # Replace {{real_time_data}} with actual data
-        real_time_data = f"""
-- news_data
-{bitcoin_context['news_data']}
+        real_time_data = ""
 
-- data_json
-{bitcoin_context['data_json']}
-
-- last_decisions
-{bitcoin_context['last_decisions']}
-
-- fear_and_greed
-{bitcoin_context['fear_and_greed']}
-
-- current_status
-{bitcoin_context['current_status']}
+        for key, value in bitcoin_context.items():
+            if value:  # Check if value exists
+                real_time_data += f"""
+- {key}
+{value}
+\n
 """
 
         instructions = re.sub(r"\{\{real_time_data\}\}", real_time_data, instructions)

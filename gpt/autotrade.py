@@ -141,7 +141,6 @@ def get_news_data():
     ### Get news data from SERPAPI
 
     url = f"https://serpapi.com/search.json?engine=google_news&q=btc&api_key={os.getenv('SERPAPI_API_KEY')}"
-    result = "No news data available."
 
     try:
         response = requests.get(url)
@@ -191,10 +190,10 @@ def get_news_data():
                         )
                     )
         result = str(simplified_news)
+        return result
     except Exception as e:
         send_slack_message(f"Error fetching news data: {e}")
-
-    return result
+        return None
 
 
 def fetch_fear_and_greed_index(limit=1, date_format=""):
