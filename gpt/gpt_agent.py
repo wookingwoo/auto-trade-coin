@@ -46,12 +46,12 @@ def replace_placeholders(instructions, bitcoin_context):
     return instructions
 
 
-async def get_agent_response(bitcoin_context):
+async def get_agent_response(bitcoin_context, gpt_model):
 
     agent = Agent(
         name="Bitcoin Investment Expert",
         instructions="You are a Bitcoin investment expert who provides detailed market analysis, trading strategies, and investment advice. You analyze market trends, technical indicators, and news to offer informed recommendations for Bitcoin trading.",
-        model="gpt-4o-mini",
+        model=gpt_model,
         output_type=DecisionType,
     )
 
@@ -70,5 +70,5 @@ if __name__ == "__main__":
         "fear_and_greed": "test fear and greed",
         "current_status": "test current status",
     }
-    result = asyncio.run(get_agent_response(bitcoin_context))
+    result = asyncio.run(get_agent_response(bitcoin_context, "gpt-4o-mini"))
     print(result)

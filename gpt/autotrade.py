@@ -280,7 +280,7 @@ def make_decision_and_execute():
                 "fear_and_greed": fear_and_greed,
                 "current_status": current_status,
             }
-            advice = asyncio.run(get_agent_response(bitcoin_context))
+            advice = asyncio.run(get_agent_response(bitcoin_context, GPT_MODEL))
             break
         except json.JSONDecodeError as e:
             send_slack_message(
