@@ -1,5 +1,5 @@
 import sys
-from gpt4.autotrade import make_decision_and_execute
+from gpt.autotrade import make_decision_and_execute
 
 
 def handler(event, context):

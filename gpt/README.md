@@ -27,7 +27,7 @@ Auto-Trade-Coin is an automated cryptocurrency trading bot designed to optimize 
 
    ```sh
    git clone https://github.com/wookingwoo/auto-trade-coin.git
-   cd gpt4
+   cd gpt
    ```
 
 2. **Set Up Environment Variables**:
