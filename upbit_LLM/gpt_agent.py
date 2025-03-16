@@ -58,6 +58,7 @@ async def get_agent_response(bitcoin_context, gpt_model):
     instructions = get_instructions()
     instructions = replace_placeholders(instructions, bitcoin_context)
 
+    # TODO: properties 값도 DB에 저장 (created. id, model, tokens)
     result = await Runner.run(agent, instructions)
     return result.final_output
 
