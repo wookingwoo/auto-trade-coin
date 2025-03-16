@@ -20,7 +20,7 @@ services:
       - ./data:/auto_trade_coin/data
     ports:
       - "8501:8501"
-    command: /bin/bash -c "python3 autotrade.py & streamlit run streamlit_app.py"
+    command: /bin/bash -c "python3 main.py & streamlit run streamlit_app.py"
     networks:
       - wookingwoo-op-bridge
 

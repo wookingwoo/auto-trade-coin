@@ -12,7 +12,7 @@ Auto-Trade-Coin is an automated cryptocurrency trading bot designed to optimize 
 
 2. **UPbit LMM (OpenAI)**
    - Utilizes OpenAI's language model to analyze market data and make trading decisions on the UPbit exchange. This strategy focuses on optimizing trades for the KRW-BTC pair using AI-driven insights.
-   - [Learn more](https://github.com/wookingwoo/auto-trade-coin/tree/develop/gpt4)
+   - [Learn more](https://github.com/wookingwoo/auto-trade-coin/tree/develop/gpt)
 
 3. **Bithumb LMM (DeepSeek)**
    - Similar to the UPbit strategy, this approach uses DeepSeek's language model to interact with the Bithumb API. It fetches market data and makes trading decisions to optimize trading outcomes.
