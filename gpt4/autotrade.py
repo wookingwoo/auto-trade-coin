@@ -10,6 +10,8 @@ import pandas as pd
 import pandas_ta as ta
 from openai import OpenAI
 from slack_bot import send_slack_message
+from gpt_agent import get_agent_response
+import asyncio
 
 load_dotenv()
 GPT_MODEL = os.getenv("GPT_MODEL")
@@ -23,7 +25,7 @@ db = mongo_client["autoTradeCoin"]
 decisions_collection = db["decisions"]
 
 
-def save_decision_to_db(decision, current_status):
+def save_decision_to_db(advice, current_status):
     status_dict = json.loads(current_status)
     current_price = pyupbit.get_orderbook(ticker="KRW-BTC")["orderbook_units"][0][
         "ask_price"
@@ -32,9 +34,9 @@ def save_decision_to_db(decision, current_status):
     data_to_insert = {
         "timestamp": datetime.now(timezone.utc),
         "ai_model": GPT_MODEL,
-        "decision": decision.get("decision"),
-        "percentage": decision.get("percentage", 100),
-        "reason": decision.get("reason", ""),
+        "decision": advice.decision,
+        "percentage": advice.percentage,
+        "reason": advice.reason,
         "btc_balance": float(status_dict.get("btc_balance", 0)),
         "krw_balance": float(status_dict.get("krw_balance", 0)),
         "btc_avg_buy_price": float(status_dict.get("btc_avg_buy_price", 0)),
@@ -224,35 +226,6 @@ def get_instructions(file_path):
         send_slack_message(f"An error occurred while reading the file: {e}")
 
 
-def analyze_data_with_gpt4(
-    news_data, data_json, last_decisions, fear_and_greed, current_status
-):
-    instructions_path = "instructions.md"
-    try:
-        instructions = get_instructions(instructions_path)
-        if not instructions:
-            send_slack_message("No instructions found.")
-            return None
-
-        response = client.chat.completions.create(
-            model=GPT_MODEL,
-            messages=[
-                {"role": "system", "content": instructions},
-                {"role": "user", "content": news_data},
-                {"role": "user", "content": data_json},
-                {"role": "user", "content": last_decisions},
-                {"role": "user", "content": fear_and_greed},
-                {"role": "user", "content": current_status},
-            ],
-            response_format={"type": "json_object"},
-        )
-        advice = response.choices[0].message.content
-        return advice
-    except Exception as e:
-        send_slack_message(f"Error in analyzing data with GPT-4: {e}")
-        return None
-
-
 def execute_buy(percentage):
     print("Attempting to buy BTC with a percentage of KRW balance...")
     try:
@@ -298,13 +271,17 @@ def make_decision_and_execute():
 
     max_retries = 5
     retry_delay_seconds = 5
-    decision = None
+    advice = None
     for attempt in range(max_retries):
         try:
-            advice = analyze_data_with_gpt4(
-                news_data, data_json, last_decisions, fear_and_greed, current_status
-            )
-            decision = json.loads(advice)
+            bitcoin_context = {
+                "news_data": news_data,
+                "data_json": data_json,
+                "last_decisions": last_decisions,
+                "fear_and_greed": fear_and_greed,
+                "current_status": current_status,
+            }
+            advice = asyncio.run(get_agent_response(bitcoin_context))
             break
         except json.JSONDecodeError as e:
             send_slack_message(
@@ -313,14 +290,14 @@ def make_decision_and_execute():
             time.sleep(retry_delay_seconds)
             send_slack_message(f"Attempt {attempt + 2} of {max_retries}")
 
-    if not decision:
+    if not advice:
         send_slack_message("Failed to make a decision after maximum retries.")
         return
 
     try:
-        percentage = decision.get("percentage", 100)
-        decision_type = decision.get("decision")
-        reason = decision.get("reason", "")
+        percentage = advice.percentage
+        decision_type = advice.decision
+        reason = advice.reason
 
         if decision_type == "buy":
             execute_buy(percentage)
@@ -334,7 +311,7 @@ def make_decision_and_execute():
             message_text = "No valid decision type provided."
 
         send_slack_message(message_text)
-        save_decision_to_db(decision, current_status)
+        save_decision_to_db(advice, current_status)
     except Exception as e:
         send_slack_message(f"Failed to execute the decision or save to DB: {e}")
 
