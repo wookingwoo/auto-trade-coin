@@ -93,10 +93,15 @@ def main():
             price = ticker_data[0]["trade_price"]  # Use closing price (current price)
 
             # Determine account type and price adjustment based on decision
-            price_multiplier = 1.05 if decision["decision"] == "buy" else 0.95
+            # price_multiplier = 1.05 if decision["decision"] == "buy" else 0.95
+            price_multiplier = 1
 
             volume = 0
 
+            print("현재 잔고:", float(order_chance["ask_account"]["balance"]))
+            print(f"{market} 현재가: {price}")
+
+            print()
             if decision["decision"] == "buy":
                 send_slack_message(f"{market}을 매수합니다.")
                 volume = (
