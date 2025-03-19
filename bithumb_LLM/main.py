@@ -4,7 +4,7 @@ from trade_USDT import (
     fetch_ticker,
     fetch_orderbook,
 )
-from deepseek_decision import get_trading_decision
+from llm_decision.deepseek import get_trading_decision
 from order_execution import execute_order
 import os
 from dotenv import load_dotenv
