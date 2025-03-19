@@ -1,3 +1,3 @@
 # Configuration for Bithumb API
-MARKET = "KRW-USDT"  # 테더
+MARKET_LIST = ["KRW-USDT", "KRW-BTC"]
 HEADERS = {"accept": "application/json"}
