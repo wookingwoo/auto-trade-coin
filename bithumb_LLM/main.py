@@ -114,8 +114,8 @@ def main():
 
             price = int(price * price_multiplier)
 
-            send_slack_message("volume(주문량):", volume)
-            send_slack_message("price(주문가격):", price)
+            send_slack_message(f"volume(주문량): {volume}")
+            send_slack_message(f"price(주문가격): {price}")
 
             execute_order(
                 bithumb_access_key, bithumb_secret_key, market, side, volume, price
