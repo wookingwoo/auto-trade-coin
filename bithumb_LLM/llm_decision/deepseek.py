@@ -13,9 +13,10 @@ LLM_MODEL = os.getenv("LLM_MODEL")
 def parse_json_content(response_content):
     try:
         # JSON만 추출하기 위해 정규식 사용
-        json_match = re.search(r"\{[\s\S]*\}", response_content)
+        json_match = re.search(r"```json\s*([\s\S]*?)\s*```", response_content)
         if json_match:
-            json_content = json_match.group(0)
+            json_content = json_match.group(1)
+            print("\n\njson_content:", json_content)
             # JSON 파싱
             decision_json = json.loads(json_content)
             return decision_json
@@ -44,5 +45,8 @@ def get_trading_decision(user_message):
     )
 
     response_content = response.choices[0].message.content
+
+    # print("\n\nresponse_content:", response_content)
+
     decision_json = parse_json_content(response_content)
     return decision_json

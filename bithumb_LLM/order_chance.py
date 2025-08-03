@@ -7,6 +7,9 @@ import requests
 
 
 def get_order_chance(access_key, secret_key, market):
+    """
+    마켓별 주문 가능 정보를 조회합니다.
+    """
     api_url = "https://api.bithumb.com"
 
     # Set API parameters

@@ -42,7 +42,9 @@ def replace_placeholders(instructions, bitcoin_context):
 \n
 """
 
-        instructions = re.sub(r"\{\{real_time_data\}\}", real_time_data, instructions)
+        # Escape backslashes in real_time_data to prevent regex errors
+        escaped_real_time_data = real_time_data.replace("\\", "\\\\")
+        instructions = re.sub(r"\{\{real_time_data\}\}", escaped_real_time_data, instructions)
     return instructions
 
 
@@ -58,6 +60,7 @@ async def get_agent_response(bitcoin_context, gpt_model):
     instructions = get_instructions()
     instructions = replace_placeholders(instructions, bitcoin_context)
 
+    # TODO: properties 값도 DB에 저장 (created. id, model, tokens)
     result = await Runner.run(agent, instructions)
     return result.final_output
 
