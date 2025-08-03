@@ -1,6 +1,7 @@
 version: '3.8'
 services:
   auto-trade-coin-gpt:
+    platform: linux/arm64
     build: .
     image: auto-trade-coin-gpt
     container_name: auto-trade-coin-gpt
