@@ -2,7 +2,7 @@ openai-agents==0.0.4
 python-dotenv==1.0.1
 pyupbit==0.2.33
 PyJWT==2.8.0
-# pandas==1.5.3  # Stable version for ARM compatibility
+pandas==2.2.1
 pandas_ta==0.3.14b0
 schedule==1.2.1
 streamlit==1.41.1
