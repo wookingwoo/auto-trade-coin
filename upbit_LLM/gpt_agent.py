@@ -42,7 +42,9 @@ def replace_placeholders(instructions, bitcoin_context):
 \n
 """
 
-        instructions = re.sub(r"\{\{real_time_data\}\}", real_time_data, instructions)
+        # Escape backslashes in real_time_data to prevent regex errors
+        escaped_real_time_data = real_time_data.replace("\\", "\\\\")
+        instructions = re.sub(r"\{\{real_time_data\}\}", escaped_real_time_data, instructions)
     return instructions
 
 
