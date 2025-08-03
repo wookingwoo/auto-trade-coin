@@ -1,4 +1,4 @@
-FROM python:3.12
+FROM arm64v8/python:3.12
 LABEL maintainer="contact@wookingwoo.com"
 
 WORKDIR /auto_trade_coin
