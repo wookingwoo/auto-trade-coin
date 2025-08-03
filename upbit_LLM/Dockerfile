@@ -6,23 +6,25 @@ WORKDIR /auto_trade_coin
 # Copy requirements.txt
 COPY requirements.txt .
 
-# Install system dependencies for pandas compatibility on ARM
+# Install system dependencies for ARM compatibility
 RUN apt-get update && apt-get install -y \
-    build-essential \
-    gfortran \
-    libopenblas-dev \
-    liblapack-dev \
-    pkg-config \
+    libopenblas-base \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install numpy first with OPENBLAS for ARM compatibility
-RUN pip install --no-cache-dir numpy==1.24.3
+# Set environment variables for ARM compatibility
+ENV OPENBLAS_NUM_THREADS=1
+ENV OMP_NUM_THREADS=1
+ENV BLAS=None
+ENV LAPACK=None
+ENV ATLAS=None
 
-# Install pandas with specific configuration for ARM
-RUN OPENBLAS_NUM_THREADS=1 pip install --no-cache-dir --no-binary=pandas pandas==2.0.3
+# Try ARM-compatible wheel first, fallback to older stable version if needed
+RUN pip install --no-cache-dir numpy==1.24.3 || pip install --no-cache-dir numpy==1.21.6
+RUN pip install --no-cache-dir pandas==2.0.3 || pip install --no-cache-dir pandas==1.5.3
 
 # Install the rest of the packages
-RUN pip install -r requirements.txt --ignore-installed pandas
+RUN pip install -r requirements.txt --ignore-installed pandas numpy
 
 # Copy all codes
 COPY . .
