@@ -36,36 +36,25 @@ def llm_decide(df: pd.DataFrame, risk_budget_usdt: float, llm_provider: str = "o
             "size_usdt": risk_budget_usdt if action != "HOLD" else 0.0,
         }
 
-    try:
-        # Lazy import to avoid hard dep errors when no key
-        from langchain_openai import ChatOpenAI
-        from langchain_core.prompts import ChatPromptTemplate
-        from langchain_core.output_parsers import JsonOutputParser
+    # Lazy import to avoid hard dep errors when no key
+    from langchain_openai import ChatOpenAI
+    from langchain_core.prompts import ChatPromptTemplate
+    from langchain_core.output_parsers import JsonOutputParser
 
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", LLM_PROMPT.format(symbol=settings.symbol, interval=settings.interval)),
-            (
-                "user",
-                "Risk budget (USDT): {risk_budget}. Recent rows CSV (tail):\n{rows}\nReturn JSON only.",
-            ),
-        ])
-        model = ChatOpenAI(model="gpt-4o-mini", temperature=0.2)
-        chain = prompt | model | JsonOutputParser()
-        out = chain.invoke({"risk_budget": risk_budget_usdt, "rows": _format_rows(df)})
-        # Ensure required fields
-        return {
-            "action": str(out.get("action", "HOLD")).upper(),
-            "confidence": float(out.get("confidence", 0.5)),
-            "reason": str(out.get("reason", "")),
-            "size_usdt": float(out.get("size_usdt", 0.0)),
-        }
-    except Exception as e:
-        # Fail safe
-        action, reason = fallback_rule_based(df)
-        return {
-            "action": action,
-            "confidence": 0.55 if action != "HOLD" else 0.5,
-            "reason": f"LLM error fallback: {e}",
-            "size_usdt": risk_budget_usdt if action != "HOLD" else 0.0,
-        }
-
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", LLM_PROMPT.format(symbol=settings.symbol, interval=settings.interval)),
+        (
+            "user",
+            "Risk budget (USDT): {risk_budget}. Recent rows CSV (tail):\n{rows}\nReturn JSON only.",
+        ),
+    ])
+    model = ChatOpenAI(model="gpt-4o-mini", temperature=0.2)
+    chain = prompt | model | JsonOutputParser()
+    out = chain.invoke({"risk_budget": risk_budget_usdt, "rows": _format_rows(df)})
+    # Ensure required fields
+    return {
+        "action": str(out.get("action", "HOLD")).upper(),
+        "confidence": float(out.get("confidence", 0.5)),
+        "reason": str(out.get("reason", "")),
+        "size_usdt": float(out.get("size_usdt", 0.0)),
+    }

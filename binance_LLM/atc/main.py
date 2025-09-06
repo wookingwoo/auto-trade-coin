@@ -63,9 +63,12 @@ def _price_now() -> float:
 def loop_once() -> None:
     s = get_settings()
     inserted = upsert_candles()
+    print(f"[loop] upsert_candles inserted={inserted}")
     df = _load_recent_candles(200)
     budget = _risk_budget_usdt()
+    print(f"[loop] risk_budget_usdt={budget:.4f}")
     decision = llm_decide(df, budget)
+    print(f"[loop] decision={decision}")
 
     session = make_session(s.db_path)
     try:
@@ -84,16 +87,20 @@ def loop_once() -> None:
 
     action = decision["action"].upper()
     if action == "HOLD" or decision.get("size_usdt", 0.0) <= 0:
+        print(f"[loop] action={action} size_usdt={decision.get('size_usdt', 0.0)} -> skip")
         return
 
     price = _price_now()
+    print(f"[loop] price_now={price}")
     broker = (
         LiveBroker(futures=(s.market == "futures")) if s.mode == "live" else PaperBroker(s.db_path)
     )
 
     if action in ("BUY", "LONG"):
+        print(f"[loop] placing BUY size_usdt={decision['size_usdt']} price={price}")
         broker.market_order(s.symbol, "BUY", price, decision["size_usdt"])
     elif action in ("SELL", "SHORT"):
+        print(f"[loop] placing SELL size_usdt={decision['size_usdt']} price={price}")
         broker.market_order(s.symbol, "SELL", price, decision["size_usdt"])
 
 
@@ -123,10 +130,7 @@ def main():
             f"Running loop mode={s.mode} market={s.market} symbol={s.symbol} interval={s.interval} every {args.interval_seconds}s"
         )
         while True:
-            try:
-                loop_once()
-            except Exception as e:
-                print("Error in loop:", e)
+            loop_once()
             time.sleep(args.interval_seconds)
         return
     parser.print_help()

@@ -6,6 +6,8 @@ import time
 from typing import Any, Dict, List, Optional
 
 import requests
+from urllib.parse import urlencode
+from decimal import Decimal, ROUND_DOWN
 
 
 BINANCE_API = "https://api.binance.com"
@@ -41,14 +43,13 @@ class SimpleBinance:
         r.raise_for_status()
         return float(r.json()["price"])
 
-    # Private endpoints - minimal sign helper
-    def _sign(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    # Private endpoints - signing helpers (preserve param order)
+    def _sign_items(self, items: List[tuple[str, Any]]) -> List[tuple[str, Any]]:
         if not self.api_secret:
             raise RuntimeError("Private endpoint requires API secret")
-        query = "&".join([f"{k}={params[k]}" for k in sorted(params)])
+        query = urlencode(items)
         sig = hmac.new(self.api_secret.encode(), query.encode(), hashlib.sha256).hexdigest()
-        params["signature"] = sig
-        return params
+        return items + [("signature", sig)]
 
     def _ts(self):
         return int(time.time() * 1000)
@@ -56,34 +57,116 @@ class SimpleBinance:
     def account_info(self) -> Dict[str, Any]:
         path = "/fapi/v2/account" if self.base == BINANCE_FAPI else "/api/v3/account"
         url = f"{self.base}{path}"
-        params = {"timestamp": self._ts()}
-        r = self.session.get(url, params=self._sign(params), timeout=10)
+        items: List[tuple[str, Any]] = [("timestamp", self._ts())]
+        signed = self._sign_items(items)
+        r = self.session.get(url, params=signed, timeout=10)
         r.raise_for_status()
         return r.json()
 
-    def order_market(self, symbol: str, side: str, quantity: float) -> Dict[str, Any]:
+    # Exchange info: symbol metadata (base/quote, filters)
+    def exchange_info(self, symbol: str) -> Dict[str, Any]:
+        if self.base == BINANCE_FAPI:
+            url = f"{self.base}/fapi/v1/exchangeInfo"
+        else:
+            url = f"{self.base}/api/v3/exchangeInfo"
+        r = self.session.get(url, params={"symbol": symbol.upper()}, timeout=10)
+        r.raise_for_status()
+        return r.json()
+
+    def symbol_assets(self, symbol: str) -> tuple[str, str]:
+        info = self.exchange_info(symbol)
+        syms = info.get("symbols") or []
+        if not syms:
+            raise RuntimeError(f"No symbol metadata for {symbol}")
+        s = syms[0]
+        return s.get("baseAsset"), s.get("quoteAsset")
+
+    def quote_precision(self, symbol: str) -> Optional[int]:
+        info = self.exchange_info(symbol)
+        syms = info.get("symbols") or []
+        if not syms:
+            return None
+        s = syms[0]
+        # Spot symbols expose quotePrecision
+        return int(s.get("quotePrecision")) if s.get("quotePrecision") is not None else None
+
+    @staticmethod
+    def round_down(value: float, decimals: int) -> float:
+        if decimals is None or decimals < 0:
+            return float(value)
+        q = Decimal(10) ** -decimals
+        return float(Decimal(str(value)).quantize(q, rounding=ROUND_DOWN))
+
+    def min_notional(self, symbol: str) -> Optional[float]:
+        info = self.exchange_info(symbol)
+        syms = info.get("symbols") or []
+        if not syms:
+            return None
+        filters = syms[0].get("filters", [])
+        # Spot typically uses MIN_NOTIONAL; futures may use NOTIONAL
+        for f in filters:
+            if f.get("filterType") in ("MIN_NOTIONAL", "NOTIONAL"):
+                mn = f.get("minNotional") or f.get("notional")
+                try:
+                    return float(mn)
+                except Exception:
+                    return None
+        return None
+
+    def spot_free_balance(self, asset: str) -> float:
+        if self.base != BINANCE_API:
+            raise RuntimeError("spot_free_balance called on futures client")
+        acct = self.account_info()
+        bals = acct.get("balances", [])
+        for b in bals:
+            if b.get("asset") == asset.upper():
+                try:
+                    return float(b.get("free", 0))
+                except Exception:
+                    return 0.0
+        return 0.0
+
+    def order_market(
+        self,
+        symbol: str,
+        side: str,
+        quantity: Optional[float] = None,
+        quote_order_qty: Optional[float] = None,
+        recv_window: int = 5000,
+    ) -> Dict[str, Any]:
         side = side.upper()
         if self.base == BINANCE_FAPI:
             url = f"{self.base}/fapi/v1/order"
-            params = {
-                "symbol": symbol.upper(),
-                "side": side,  # BUY or SELL
-                "type": "MARKET",
-                "quantity": quantity,
-                "timestamp": self._ts(),
-            }
+            items: List[tuple[str, Any]] = [
+                ("symbol", symbol.upper()),
+                ("side", side),
+                ("type", "MARKET"),
+                ("quantity", quantity),
+                ("timestamp", self._ts()),
+                ("recvWindow", recv_window),
+            ]
         else:
             url = f"{self.base}/api/v3/order"
-            params = {
-                "symbol": symbol.upper(),
-                "side": side,  # BUY or SELL
-                "type": "MARKET",
-                "quoteOrderQty": None,
-                "quantity": quantity,
-                "timestamp": self._ts(),
-                "newOrderRespType": "RESULT",
-            }
-        r = self.session.post(url, data=self._sign({k: v for k, v in params.items() if v is not None}), timeout=10)
+            items = [
+                ("symbol", symbol.upper()),
+                ("side", side),
+                ("type", "MARKET"),
+                # For spot, prefer quoteOrderQty if provided to avoid LOT_SIZE issues
+                ("quoteOrderQty", quote_order_qty if quote_order_qty is not None else None),
+                ("quantity", None if quote_order_qty is not None else quantity),
+                ("timestamp", self._ts()),
+                ("newOrderRespType", "RESULT"),
+                ("recvWindow", recv_window),
+            ]
+        print(f"[Binance] POST {url}")
+        print(f"[Binance] params (pre-sign): {dict((k, v) for k, v in items if v is not None)}")
+
+        signed_items = self._sign_items([(k, v) for k, v in items if v is not None])
+        r = self.session.post(url, data=signed_items, timeout=10)
+        print(f"[Binance] response status={r.status_code}")
+        # Print a short snippet of the response body for diagnostics
+        body = r.text
+        print(f"[Binance] response body: {body[:500]}")
         r.raise_for_status()
         return r.json()
 
