@@ -30,10 +30,12 @@ class PaperBroker:
         self.db_path = db_path
 
     def market_order(self, symbol: str, side: str, price: float, size_usdt: float) -> TradeResult:
+        print(f"[PaperBroker] risk_budget_usdt={size_usdt}")
         session = make_session(self.db_path)
         try:
             side = side.upper()
             qty = _calc_qty_usdt(price, size_usdt)
+            print(f"[PaperBroker] symbol={symbol} side={side} price={price} qty={qty}")
 
             pos = session.scalar(select(PaperPosition).where(PaperPosition.symbol == symbol))
             if not pos:

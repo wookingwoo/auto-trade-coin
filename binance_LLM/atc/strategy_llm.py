@@ -25,10 +25,12 @@ def _format_rows(df: pd.DataFrame, n: int = 60) -> str:
 def llm_decide(df: pd.DataFrame, risk_budget_usdt: float, llm_provider: str = "openai") -> Dict:
     settings = get_settings()
     df = add_indicators(df)
+    print(f"[llm] risk_budget_usdt={risk_budget_usdt}")
 
     # Fallback if no API for LLM
     if not settings.openai_api_key:
         action, reason = fallback_rule_based(df)
+        print("[llm] no OPENAI_API_KEY; using fallback rule-based decision")
         return {
             "action": action,
             "confidence": 0.6 if action != "HOLD" else 0.5,
@@ -48,7 +50,7 @@ def llm_decide(df: pd.DataFrame, risk_budget_usdt: float, llm_provider: str = "o
             "Risk budget (USDT): {risk_budget}. Recent rows CSV (tail):\n{rows}\nReturn JSON only.",
         ),
     ])
-    model = ChatOpenAI(model="gpt-4o-mini", temperature=0.2)
+    model = ChatOpenAI(model="gpt-5-nano", temperature=0)
     chain = prompt | model | JsonOutputParser()
     out = chain.invoke({"risk_budget": risk_budget_usdt, "rows": _format_rows(df)})
     # Ensure required fields
