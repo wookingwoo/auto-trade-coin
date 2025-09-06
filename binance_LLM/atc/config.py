@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 
 load_dotenv(override=False)
 
-
 class Settings(BaseModel):
     symbol: str = Field(default=os.getenv("ATC_SYMBOL", "BTCUSDT"))
     interval: str = Field(default=os.getenv("ATC_INTERVAL", "1m"))
@@ -22,11 +21,10 @@ class Settings(BaseModel):
     openai_api_key: str | None = Field(default=os.getenv("OPENAI_API_KEY"))
 
     # Risk
-    risk_per_trade: float = Field(default=float(os.getenv("ATC_RISK_PER_TRADE", 0.01)))
+    risk_budget_usdt: float | None = Field(default=(float(os.getenv("ATC_RISK_BUDGET_USDT")))
+    )
     max_leverage: int = Field(default=int(os.getenv("ATC_MAX_LEVERAGE", 3)))
-    base_balance_usdt: float = Field(default=float(os.getenv("ATC_BASE_BALANCE_USDT", 10000)))
 
 
 def get_settings() -> Settings:
     return Settings()
-

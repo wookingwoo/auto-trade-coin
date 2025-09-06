@@ -49,11 +49,6 @@ def _load_recent_candles(n: int = 200) -> pd.DataFrame:
         session.close()
 
 
-def _risk_budget_usdt() -> float:
-    s = get_settings()
-    return s.base_balance_usdt * s.risk_per_trade
-
-
 def _price_now() -> float:
     s = get_settings()
     client = SimpleBinance(futures=(s.market == "futures"))
@@ -65,7 +60,7 @@ def loop_once() -> None:
     inserted = upsert_candles()
     print(f"[loop] upsert_candles inserted={inserted}")
     df = _load_recent_candles(200)
-    budget = _risk_budget_usdt()
+    budget = float(s.risk_budget_usdt)
     print(f"[loop] risk_budget_usdt={budget:.4f}")
     decision = llm_decide(df, budget)
     print(f"[loop] decision={decision}")
