@@ -1,0 +1,15 @@
+python-binance==1.0.19
+websockets>=10.0
+requests>=2.31.0
+urllib3>=2.1.0
+pydantic>=2.6.0
+SQLAlchemy>=2.0.28
+pandas>=2.2.0
+numpy>=1.26.4
+ta>=0.11.0
+langchain>=0.2.0
+langchain-openai>=0.1.7
+openai>=1.30.0
+python-dotenv>=1.0.1
+streamlit>=1.36.0
+uvloop; platform_system != 'Windows'
