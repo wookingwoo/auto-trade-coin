@@ -1,7 +1,7 @@
 FROM python:3.12
 LABEL maintainer="contact@wookingwoo.com"
 
-WORKDIR /auto_trade_coin
+WORKDIR /root
 
 # Copy requirements.txt
 COPY requirements.txt .
@@ -12,5 +12,4 @@ RUN pip install -r requirements.txt
 # Copy all codes
 COPY . .
 
-EXPOSE 8501
-CMD ["streamlit", "run", "streamlit_app.py"]
+CMD ["python3", "main.py"]
