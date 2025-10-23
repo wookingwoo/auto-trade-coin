@@ -1,80 +1,196 @@
-# Auto-Trade-Coin
+# Auto-Trade-Coin: Advanced Cryptocurrency Trading Automation Platform
 
-## Overview
+## 🚀 Overview
 
-Auto-Trade-Coin is an automated cryptocurrency trading bot designed to optimize trading strategies for various cryptocurrency pairs. It leverages advanced data analytics, real-time market data, and AI-driven insights to make informed trading decisions. The bot is built to maximize profit margins while minimizing risks through a systematic and data-driven approach.
+Auto-Trade-Coin is a sophisticated cryptocurrency trading automation platform that combines cutting-edge artificial intelligence, advanced technical analysis, and robust risk management to optimize trading decisions across multiple major cryptocurrency exchanges. The platform leverages state-of-the-art language models, real-time market data analysis, and proven trading strategies to maximize returns while minimizing risks.
 
-## Strategies
+### Key Highlights
 
-1. **Volatility Breakout Strategy + fbprophet**
-   - This strategy uses the Volatility Breakout method combined with the fbprophet library to predict closing prices. It aims to capitalize on significant price movements by setting breakout signals based on daily volatility.
-   - [Learn more](https://github.com/wookingwoo/auto-trade-coin/tree/develop/volatility_breakout)
+- **Multi-Exchange Support**: Binance, UPbit, and Bithumb integration
+- **AI-Powered Decision Making**: OpenAI GPT, DeepSeek, and LangChain integration
+- **Advanced Trading Strategies**: Volatility breakout, LLM-based analysis, and Prophet forecasting
+- **Comprehensive Risk Management**: Portfolio allocation, stop-loss mechanisms, and position sizing
+- **Real-Time Monitoring**: Interactive dashboards and Slack notifications
+- **Production-Ready**: Docker containerization, AWS Lambda support, and CI/CD pipelines
 
-2. **UPbit LMM (OpenAI)**
-   - Utilizes OpenAI's language model to analyze market data and make trading decisions on the UPbit exchange. This strategy focuses on optimizing trades for the KRW-BTC pair using AI-driven insights.
-   - [Learn more](https://github.com/wookingwoo/auto-trade-coin/tree/develop/upbit_LLM)
+## 📊 Trading Strategies
 
-3. **Bithumb LMM (DeepSeek)**
-   - Similar to the UPbit strategy, this approach uses DeepSeek's language model to interact with the Bithumb API. It fetches market data and makes trading decisions to optimize trading outcomes.
-   - [Learn more](https://github.com/wookingwoo/auto-trade-coin/tree/develop/bithumb_LLM)
+### 1. **UPbit LLM Strategy** (`upbit_LLM/`)
 
-## Features
+*OpenAI-powered KRW-BTC trading optimization* [[Learn more]](https://github.com/wookingwoo/auto-trade-coin/tree/develop/upbit_LLM)
 
-- **Automated Trading**: Executes buy, sell, and hold decisions based on AI analysis.
-- **Data-Driven Insights**: Utilizes market data, technical indicators, and news sentiment analysis.
-- **Risk Management**: Incorporates risk management protocols to safeguard investments.
-- **Real-Time Monitoring**: Provides a dashboard for real-time tracking of trading performance.
+- **Technology Stack**: Python 3.12, OpenAI Agents, MongoDB, Streamlit, Docker
+- **Features**:
+  - Advanced technical analysis with pandas_ta
+  - News sentiment analysis via SerpAPI
+  - Fear & Greed Index integration
+  - MongoDB for decision history tracking
+  - AWS Lambda deployment support
+  - Jenkins CI/CD pipeline
+**Key Components**:
 
-## Prerequisites
+- `autotrade.py`: Main trading engine with comprehensive market analysis
+- `gpt_agent.py`: OpenAI agent for decision making
+- `slack_bot.py`: Real-time notifications and monitoring
+- `streamlit_app.py`: Interactive trading dashboard
 
-- Docker
-- Python 3.12 or later
-- Access to UPbit and Bithumb APIs
+### 2. **Binance LLM Strategy** (`binance_LLM/`)
 
-## Installation
+*AI-powered trading with LangChain integration* [[Learn more]](https://github.com/wookingwoo/auto-trade-coin/tree/develop/binance_LLM)
 
-1. Clone the repository:
+- **Technology Stack**: Python 3.10+, LangChain, OpenAI, SQLite, Streamlit
+- **Features**:
+  - Real-time market data collection via Binance WebSocket
+  - Technical indicator analysis (SMA, EMA, RSI, MACD, Bollinger Bands, ATR)
+  - LLM-driven decision making with confidence scoring
+  - Paper trading and live trading modes
+  - SQLite database for historical data storage
+  - Real-time monitoring dashboard
 
-   ```bash
-   git clone https://github.com/wookingwoo/auto-trade-coin.git
-   cd auto-trade-coin
-   ```
+**Key Components**:
 
-2. Install the required packages:
+- `binance_client.py`: Binance API integration for spot and futures trading
+- `strategy_llm.py`: LangChain-based decision engine
+- `features.py`: Technical indicator calculations
+- `trader.py`: Order execution engine with paper/live trading support
+- `data_collector.py`: Real-time market data collection
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+### 3. **Bithumb LLM Strategy** (`bithumb_LLM/`)
 
-3. Set up environment variables:
-   - Create a `.env` file in the root directory and add your API keys:
+*DeepSeek-powered multi-asset trading* [[Learn more]](https://github.com/wookingwoo/auto-trade-coin/tree/develop/bithumb_LLM)
 
-     ```
-     UPBIT_ACCESS_KEY=your_upbit_access_key
-     UPBIT_SECRET_KEY=your_upbit_secret_key
-     BITHUMB_API_KEY=your_bithumb_api_key
-     BITHUMB_SECRET_KEY=your_bithumb_secret_key
-     ```
+- **Technology Stack**: Python 3.10+, DeepSeek API, Slack integration
+- **Features**:
+  - Multi-timeframe analysis (minute, day, week, month)
+  - Order book and tick data analysis
+  - Dynamic fee calculation
+  - Multi-asset portfolio management (KRW-USDT, KRW-BTC)
 
-4. Run the main script:
+**Key Components**:
 
-   ```bash
-   python main.py
-   ```
+- `main.py`: Multi-asset trading orchestration
+- `fetch_trade.py`: Comprehensive market data collection
+- `llm_decision/deepseek.py`: DeepSeek AI integration
+- `order_execution.py`: Trade execution engine
 
-## Usage
+### 4. **Volatility Breakout Strategy** (`volatility_breakout/`)
 
-- The main script `main.py` fetches market data, formats a prompt, and sends it to the AI model to get a trading decision.
-- Based on the decision, it executes buy or sell orders on the respective exchange.
+*Classical technical analysis with Prophet forecasting* [[Learn more]](https://github.com/wookingwoo/auto-trade-coin/tree/develop/volatility_breakout)
 
-## License
+- **Technology Stack**: Python 3.8+, fbprophet, pyupbit, Schedule
+- **Features**:
+  - Volatility breakout signal detection
+  - 15-day moving average trend confirmation
+  - Facebook Prophet price forecasting
+  - Automated K-value optimization
+  - Comprehensive backtesting framework
 
-This project is licensed under the MIT License.
+**Key Components**:
 
-## Contributing
+- `auto_trade.py`: Main trading logic with Prophet integration
+- `back_test.py`: Strategy performance backtesting
+- `best_K.py`: Optimal K-value determination
+- `balance_inquiry.py`: Portfolio management utilities
 
-Contributions are welcome! Please fork the repository and submit a pull request for any enhancements or bug fixes.
+## 🏗️ Architecture
 
-## Contact
+Independent project structure organized by trading strategy
 
-For any inquiries or support, please contact [contact@wookingwoo.com](mailto:contact@wookingwoo.com).
+```
+Auto-Trade-Coin/
+├── binance_LLM/          # Binance + LangChain Strategy
+│   ├── atc/              # Core trading module
+│   │   ├── main.py       # Main execution engine
+│   │   ├── strategy_llm.py # LLM decision making
+│   │   ├── binance_client.py # Exchange API client
+│   │   ├── trader.py     # Order execution
+│   │   └── features.py   # Technical indicators
+│   └── dashboard/        # Streamlit monitoring
+├── upbit_LLM/           # UPbit + OpenAI Strategy
+│   ├── autotrade.py     # Main trading engine
+│   ├── gpt_agent.py     # OpenAI integration
+│   ├── streamlit_app.py # Dashboard
+│   └── aws_lambda_env/  # AWS deployment
+├── bithumb_LLM/         # Bithumb + DeepSeek Strategy
+│   ├── main.py          # Multi-asset orchestration
+│   ├── fetch_trade.py   # Market data collection
+│   └── llm_decision/    # AI decision engine
+├── volatility_breakout/ # Classical + Prophet Strategy
+│   ├── auto_trade.py    # Prophet-enhanced trading
+│   ├── back_test.py     # Performance analysis
+│   └── best_K.py        # Parameter optimization
+└── gpt4/               # Historical GPT-4 experiments
+```
+
+## 🔧 Technical Features
+
+### AI & Machine Learning
+
+- **Language Models**: OpenAI GPT-4/5, DeepSeek, LangChain
+- **Forecasting**: Facebook Prophet for time series prediction
+- **Sentiment Analysis**: News data integration and market sentiment scoring
+- **Technical Analysis**: 15+ technical indicators with customizable parameters
+
+### Risk Management
+
+- **Position Sizing**: Dynamic allocation based on confidence scores
+- **Portfolio Management**: Multi-asset rebalancing and diversification
+- **Stop-Loss Mechanisms**: Automated loss limitation
+- **Fee Optimization**: Exchange-specific fee calculation and minimization
+
+### Infrastructure
+
+- **Containerization**: Docker support for all modules
+- **Cloud Deployment**: AWS Lambda integration
+- **CI/CD**: Jenkins pipeline automation
+- **Monitoring**: Real-time Slack notifications and Streamlit dashboards
+- **Data Storage**: SQLite, MongoDB for different use cases
+
+## 📊 Monitoring & Analytics
+
+### Real-Time Dashboards
+
+- **Streamlit Dashboards**: Interactive performance monitoring
+- **Trading History**: Comprehensive decision and outcome tracking
+- **Portfolio Analytics**: Real-time balance and P&L visualization
+
+### Notification Systems
+
+- **Slack Integration**: Real-time trade notifications
+- **Error Alerting**: Automated error detection and reporting
+- **Performance Reports**: Scheduled performance summaries
+
+## ⚠️ Risk Disclaimer
+
+**IMPORTANT**: This software is for educational and research purposes. Cryptocurrency trading involves substantial risk of loss. Always:
+
+- Start with paper trading to validate strategies
+- Use only funds you can afford to lose
+- Implement proper risk management
+- Thoroughly test in your environment before live trading
+- Monitor performance continuously
+
+## 🤝 Contributing
+
+We welcome contributions! Please:
+
+1. Fork the repository
+2. Create a feature branch
+3. Implement your changes with tests
+4. Submit a pull request with detailed description
+
+### Development Guidelines
+
+- Follow PEP 8 style guidelines
+- Add comprehensive docstrings
+- Include unit tests for new features
+- Update documentation as needed
+
+## 📞 Support & Contact
+
+- **Email**: [contact@wookingwoo.com](mailto:contact@wookingwoo.com)
+- **Issues**: GitHub Issues for bug reports and feature requests
+
+## 🙏 Acknowledgments
+
+Special thanks to [@youtube-jocoding](https://github.com/youtube-jocoding) for the invaluable educational content and inspiration that helped shape this project's development.
