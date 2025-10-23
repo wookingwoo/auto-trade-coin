@@ -14,7 +14,7 @@ Auto-Trade-Coin is an automated cryptocurrency trading bot designed to optimize 
 ## Prerequisites
 
 - Docker
-- Python 3.12
+- Python 3.13
 - MongoDB
 - Slack API credentials
 - OpenAI API credentials
