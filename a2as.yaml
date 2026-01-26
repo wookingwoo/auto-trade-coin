@@ -1,0 +1,186 @@
+manifest:
+  version: "0.1.2"
+  schema: https://a2as.org/cert/schema
+  subject:
+    name: wookingwoo/auto-trade-coin
+    source: https://github.com/wookingwoo/auto-trade-coin
+    branch: develop
+    commit: "534e7124"
+    scope: [upbit_LLM/gpt_agent.py, upbit_LLM/slack_bot.py]
+  issued:
+    by: A2AS.org
+    at: '2026-01-26T16:11:44Z'
+  signatures:
+    digest: sha256:7OcnvF3n6MRUlcZ3inNZv-z18DWujFD28mZiTvrMjeI
+    key: ed25519:gX6ACOK7h9KDaFMy2gxgAoxr-OuC5EsJaXOtHBOE3_o
+    sig: ed25519:dcNVF3YJIyXaB_D2H6WBRMypIvn50wFFi9QEgiu7C8wI2z3ntFVp7Jv7D78Kc8obQsoKbUyjXf0lCEO-Miw_Bg
+
+agents:
+  agent:
+    type: instance
+    models: [gpt_model]
+    params:
+      function: get_agent_response
+      name: Bitcoin Investment Expert
+      output_type: DecisionType
+      instructions: ['You are a Bitcoin investment expert who provides detailed market analysis, trading strategies, and investment
+          advice. You analyze market trends, technical indicators, and news to offer informed recommendations for Bitcoin
+          trading.']
+
+models:
+  gpt_model:
+    type: variable
+    agents: [agent]
+
+imports:
+  Agent: agents.Agent
+  App: slack_bolt.App
+  asyncio: asyncio
+  BaseModel: pydantic.BaseModel
+  datetime: datetime.datetime
+  get_agent_response: gpt_agent.get_agent_response
+  json: json
+  load_dotenv: dotenv.load_dotenv
+  make_decision_and_execute: upbit_LLM.autotrade.make_decision_and_execute
+  MongoClient: pymongo.MongoClient
+  OpenAI: openai.OpenAI
+  os: os
+  pd: pandas
+  pyupbit: pyupbit
+  re: re
+  requests: requests
+  Runner: agents.Runner
+  send_slack_message: slack_bot.send_slack_message
+  set_default_openai_key: agents.set_default_openai_key
+  SocketModeHandler: slack_bolt.adapter.socket_mode.SocketModeHandler
+  sys: sys
+  ta: pandas_ta
+  time: time
+  timezone: datetime.timezone
+
+functions:
+  add_indicators:
+    type: sync
+    module: upbit_LLM.autotrade
+    args: [df]
+  execute_buy:
+    type: sync
+    module: upbit_LLM.autotrade
+    args: [percentage]
+  execute_sell:
+    type: sync
+    module: upbit_LLM.autotrade
+    args: [percentage]
+  fetch_and_prepare_data:
+    type: sync
+    module: upbit_LLM.autotrade
+  fetch_fear_and_greed_index:
+    type: sync
+    module: upbit_LLM.autotrade
+    args: [limit, date_format]
+  fetch_last_decisions:
+    type: sync
+    module: upbit_LLM.autotrade
+    args: [num_decisions]
+  get_agent_response:
+    type: async
+    module: upbit_LLM.gpt_agent
+    args: [bitcoin_context, gpt_model]
+  get_current_status:
+    type: sync
+    module: upbit_LLM.autotrade
+  get_instructions:
+    type: sync
+    module: upbit_LLM.gpt_agent
+    args: [file_path]
+  get_news_data:
+    type: sync
+    module: upbit_LLM.autotrade
+  handler:
+    type: sync
+    module: upbit_LLM.aws_lambda_env.lambda_function
+    args: [event, context]
+  make_decision_and_execute:
+    type: sync
+    module: upbit_LLM.autotrade
+  replace_placeholders:
+    type: sync
+    module: upbit_LLM.gpt_agent
+    args: [instructions, bitcoin_context]
+  save_decision_to_db:
+    type: sync
+    module: upbit_LLM.autotrade
+    args: [advice, current_status]
+  send_slack_message:
+    type: sync
+    module: upbit_LLM.slack_bot
+    args: [text, channel]
+  who_am_i:
+    type: sync
+    module: upbit_LLM.slack_bot
+    args: [event, client, message, say]
+
+variables:
+  GPT_MODEL:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [upbit_LLM.autotrade, upbit_LLM.main]
+  MONGO_URI:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [upbit_LLM.autotrade]
+  OPENAI_API_KEY:
+    type: env
+    params:
+      caller: [os.getenv, OpenAI]
+      path: [upbit_LLM.autotrade, upbit_LLM.gpt_agent]
+  SERPAPI_API_KEY:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [upbit_LLM.autotrade]
+  SLACK_APP_TOKEN:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [upbit_LLM.slack_bot]
+  SLACK_BOT_TOKEN:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [upbit_LLM.slack_bot]
+  SLACK_COINBOT_CHANNEL_NAME:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [upbit_LLM.slack_bot]
+  UPBIT_ACCESS_KEY:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [upbit_LLM.autotrade]
+  UPBIT_SECRET_KEY:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [upbit_LLM.autotrade]
+
+files:
+  file_path:
+    type: variable
+    actions: [read]
+    params:
+      caller: [open]
+      alias: [file]
+
+networks:
+  api.alternative.me:
+    type: api
+    actions: [GET]
+    urls: [/fng/]
+    protocols: [https]
+    ports: ["443"]
+    params:
+      caller: [fetch_fear_and_greed_index]
