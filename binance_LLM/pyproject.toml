@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling>=1.25.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "auto-trade-coin"
+version = "0.1.0"
+description = "LLM-driven Binance futures trading MVP with MongoDB persistence and LangSmith tracing."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+  { name = "OpenAI Codex" }
+]
+dependencies = [
+  "apscheduler>=3.10.4",
+  "feedparser>=6.0.11",
+  "httpx>=0.27.0",
+  "langchain>=1.0.0",
+  "langchain-core>=1.0.0",
+  "langchain-openai>=0.3.0",
+  "langsmith>=0.4.0",
+  "pandas>=2.2.2",
+  "pydantic>=2.8.2",
+  "pydantic-settings>=2.4.0",
+  "pymongo>=4.8.0",
+  "python-dotenv>=1.0.1",
+  "structlog>=24.4.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3.2",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
