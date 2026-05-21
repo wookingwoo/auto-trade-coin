@@ -61,6 +61,21 @@ def validate_runtime_settings(settings: Settings) -> str:
     return "ok"
 
 
+def validate_dashboard_settings(settings: Settings) -> str:
+    """Validate dashboard settings before starting the web server."""
+
+    if not settings.dashboard_enabled:
+        raise PreflightCheckError("DASHBOARD_ENABLED=true is required to start the dashboard.")
+
+    if settings.dashboard_enabled and (
+        not settings.dashboard_username or not settings.dashboard_password
+    ):
+        raise PreflightCheckError(
+            "DASHBOARD_USERNAME and DASHBOARD_PASSWORD are required when DASHBOARD_ENABLED=true."
+        )
+    return "ok"
+
+
 def _check_mongodb(settings: Settings) -> str:
     try:
         db = MongoDatabase(settings)

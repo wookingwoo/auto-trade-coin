@@ -145,3 +145,71 @@ class TradingRepository:
 
     def get_strategy_run_by_idempotency_key(self, idempotency_key: str) -> dict | None:
         return self.strategy_runs.find_one({"idempotency_key": idempotency_key})
+
+    def get_latest_strategy_runs(
+        self,
+        limit: int = 50,
+        symbol: str | None = None,
+        status: str | None = None,
+    ) -> list[dict]:
+        query = self._compact_query({"symbol": symbol, "status": status})
+        cursor = self.strategy_runs.find(query).sort("started_at", DESCENDING).limit(limit)
+        return list(cursor)
+
+    def get_strategy_run(self, run_id: str) -> dict | None:
+        return self.strategy_runs.find_one({"run_id": run_id})
+
+    def get_market_snapshot(self, run_id: str) -> dict | None:
+        return self.market_snapshots.find_one({"run_id": run_id})
+
+    def get_technical_indicators_for_run(self, run_id: str) -> dict | None:
+        return self.technical_indicators.find_one({"run_id": run_id})
+
+    def get_llm_decision_for_run(self, run_id: str) -> dict | None:
+        return self.llm_decisions.find_one({"run_id": run_id})
+
+    def get_decisions_for_dashboard(
+        self,
+        symbol: str | None = None,
+        limit: int = 100,
+    ) -> list[dict]:
+        query = self._compact_query({"symbol": symbol})
+        cursor = self.llm_decisions.find(query).sort("created_at", DESCENDING).limit(limit)
+        return list(cursor)
+
+    def get_trade_orders_for_dashboard(
+        self,
+        run_id: str | None = None,
+        symbol: str | None = None,
+        limit: int = 100,
+    ) -> list[dict]:
+        query = self._compact_query({"run_id": run_id, "symbol": symbol})
+        cursor = self.trade_orders.find(query).sort("executed_at", DESCENDING).limit(limit)
+        return list(cursor)
+
+    def get_positions_for_dashboard(
+        self,
+        symbol: str | None = None,
+        mode: str | None = None,
+        limit: int = 100,
+    ) -> list[dict]:
+        query = self._compact_query({"symbol": symbol, "mode": mode})
+        cursor = self.positions.find(query).sort("captured_at", DESCENDING).limit(limit)
+        return list(cursor)
+
+    def get_execution_logs_for_dashboard(
+        self,
+        run_id: str | None = None,
+        symbol: str | None = None,
+        limit: int = 100,
+    ) -> list[dict]:
+        query = self._compact_query({"run_id": run_id, "symbol": symbol})
+        cursor = self.execution_logs.find(query).sort("created_at", DESCENDING).limit(limit)
+        return list(cursor)
+
+    def get_system_config(self) -> dict | None:
+        return self.system_configs.find_one({"config_key": "runtime_settings"})
+
+    @staticmethod
+    def _compact_query(values: dict[str, Any]) -> dict[str, Any]:
+        return {key: value for key, value in values.items() if value is not None}

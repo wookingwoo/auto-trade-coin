@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<form class="filter-bar" method="get">
+  <label>
+    Symbol
+    <input name="symbol" value="{{ symbol }}" placeholder="BTCUSDT">
+  </label>
+  <label>
+    Status
+    <input name="status" value="{{ status }}" placeholder="completed">
+  </label>
+  <button type="submit">Filter</button>
+  <a href="/runs">Reset</a>
+</form>
+
+<section class="card">
+  {% if runs %}
+    <table>
+      <thead><tr><th>Run ID</th><th>Symbol</th><th>Status</th><th>Started</th><th></th></tr></thead>
+      <tbody>
+      {% for run in runs %}
+        <tr>
+          <td>{{ run.run_id }}</td>
+          <td>{{ run.symbol }}</td>
+          <td>{{ run.status }}</td>
+          <td>{{ run.started_at }}</td>
+          <td><a href="/runs/{{ run.run_id }}">Open</a></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">No runs found.</p>
+  {% endif %}
+</section>
+{% endblock %}

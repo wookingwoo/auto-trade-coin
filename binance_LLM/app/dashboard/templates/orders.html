@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<form class="filter-bar" method="get">
+  <label>
+    Symbol
+    <input name="symbol" value="{{ symbol }}" placeholder="BTCUSDT">
+  </label>
+  <button type="submit">Filter</button>
+  <a href="/orders">Reset</a>
+</form>
+
+<section class="card">
+  {% if orders %}
+    <table>
+      <thead><tr><th>Run</th><th>Symbol</th><th>Side</th><th>Status</th><th>Qty</th><th>PnL</th></tr></thead>
+      <tbody>
+      {% for order in orders %}
+        <tr>
+          <td><a href="/runs/{{ order.run_id }}">{{ order.run_id }}</a></td>
+          <td>{{ order.symbol }}</td>
+          <td>{{ order.side }}</td>
+          <td>{{ order.status }}</td>
+          <td>{{ order.quantity }}</td>
+          <td>{{ order.realized_pnl }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">No orders recorded.</p>
+  {% endif %}
+</section>
+{% endblock %}

@@ -75,6 +75,47 @@ def test_runtime_settings_reject_default_leverage_above_configured_max() -> None
         preflight.validate_runtime_settings(settings)
 
 
+def test_dashboard_settings_reject_enabled_dashboard_without_credentials() -> None:
+    settings = Settings(
+        mongodb_uri="mongodb://localhost:27017",
+        llm_provider="openai",
+        openai_api_key="dummy",
+        dashboard_enabled=True,
+        dashboard_username="operator",
+        dashboard_password="",
+    )
+
+    with pytest.raises(PreflightCheckError, match="DASHBOARD_USERNAME and DASHBOARD_PASSWORD"):
+        preflight.validate_dashboard_settings(settings)
+
+
+def test_dashboard_settings_reject_disabled_dashboard_server() -> None:
+    settings = Settings(
+        mongodb_uri="mongodb://localhost:27017",
+        llm_provider="openai",
+        openai_api_key="dummy",
+        dashboard_enabled=False,
+        dashboard_username="operator",
+        dashboard_password="secret",
+    )
+
+    with pytest.raises(PreflightCheckError, match="DASHBOARD_ENABLED"):
+        preflight.validate_dashboard_settings(settings)
+
+
+def test_dashboard_settings_accept_enabled_dashboard_with_credentials() -> None:
+    settings = Settings(
+        mongodb_uri="mongodb://localhost:27017",
+        llm_provider="openai",
+        openai_api_key="dummy",
+        dashboard_enabled=True,
+        dashboard_username="operator",
+        dashboard_password="secret",
+    )
+
+    assert preflight.validate_dashboard_settings(settings) == "ok"
+
+
 def test_run_preflight_includes_live_private_check(monkeypatch: pytest.MonkeyPatch) -> None:
     settings = Settings(
         mongodb_uri="mongodb://localhost:27017",

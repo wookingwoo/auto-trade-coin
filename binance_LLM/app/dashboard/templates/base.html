@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ title }} · Auto Trade Coin</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='dashboard.css') }}">
+  </head>
+  <body>
+    <aside class="shell-nav">
+      <div class="brand">ATC</div>
+      <div class="nav-caption">Read-only console</div>
+      <a href="/dashboard">Overview</a>
+      <a href="/runs">Runs</a>
+      <a href="/decisions">Decisions</a>
+      <a href="/orders">Orders</a>
+      <a href="/positions">Positions</a>
+    </aside>
+    <main class="shell-main">
+      <header class="page-header">
+        <div>
+          <h1>{{ title }}</h1>
+          <p>MongoDB-backed operations view. No trading controls are exposed here.</p>
+        </div>
+      </header>
+      {% block content %}{% endblock %}
+    </main>
+  </body>
+</html>

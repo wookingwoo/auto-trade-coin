@@ -8,3 +8,13 @@ services:
     command: ["python", "-m", "app.scheduler"]
     restart: unless-stopped
 
+  dashboard:
+    build: .
+    profiles:
+      - dashboard
+    env_file:
+      - .env
+    command: ["python", "-m", "app.dashboard.main"]
+    ports:
+      - "8080:8080"
+    restart: unless-stopped

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<form class="filter-bar" method="get">
+  <label>
+    Symbol
+    <input name="symbol" value="{{ symbol }}" placeholder="BTCUSDT">
+  </label>
+  <label>
+    Mode
+    <input name="mode" value="{{ mode }}" placeholder="dry_run">
+  </label>
+  <button type="submit">Filter</button>
+  <a href="/positions">Reset</a>
+</form>
+
+<section class="card">
+  {% if positions %}
+    <table>
+      <thead><tr><th>Symbol</th><th>Mode</th><th>Side</th><th>Qty</th><th>Unrealized PnL</th></tr></thead>
+      <tbody>
+      {% for position in positions %}
+        <tr>
+          <td>{{ position.symbol }}</td>
+          <td>{{ position.mode }}</td>
+          <td>{{ position.side }}</td>
+          <td>{{ position.quantity }}</td>
+          <td>{{ position.unrealized_pnl }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">No positions recorded.</p>
+  {% endif %}
+</section>
+{% endblock %}

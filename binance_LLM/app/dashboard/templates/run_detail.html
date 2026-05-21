@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="grid two">
+  <article class="card"><h2>Run</h2><pre>{{ run | pretty_json }}</pre></article>
+  <article class="card"><h2>Market Snapshot</h2><pre>{{ snapshot | pretty_json }}</pre></article>
+  <article class="card"><h2>Indicators</h2><pre>{{ indicators | pretty_json }}</pre></article>
+  <article class="card"><h2>LLM Decision</h2><pre>{{ decision | pretty_json }}</pre></article>
+</section>
+<section class="card"><h2>Orders</h2><pre>{{ orders | pretty_json }}</pre></section>
+<section class="card"><h2>Logs</h2><pre>{{ logs | pretty_json }}</pre></section>
+{% endblock %}

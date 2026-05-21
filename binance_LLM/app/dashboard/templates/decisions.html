@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<form class="filter-bar" method="get">
+  <label>
+    Symbol
+    <input name="symbol" value="{{ symbol }}" placeholder="BTCUSDT">
+  </label>
+  <button type="submit">Filter</button>
+  <a href="/decisions">Reset</a>
+</form>
+
+<section class="card">
+  {% if decisions %}
+    <table>
+      <thead><tr><th>Run</th><th>Symbol</th><th>Decision</th><th>Confidence</th><th>Reasoning</th></tr></thead>
+      <tbody>
+      {% for decision in decisions %}
+        <tr>
+          <td><a href="/runs/{{ decision.run_id }}">{{ decision.run_id }}</a></td>
+          <td>{{ decision.symbol }}</td>
+          <td>{{ decision.decision }}</td>
+          <td>{{ decision.confidence }}</td>
+          <td>{{ decision.reasoning }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">No decisions recorded.</p>
+  {% endif %}
+</section>
+{% endblock %}

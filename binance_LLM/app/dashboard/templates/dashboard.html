@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="summary-strip">
+  <article class="metric">
+    <span>Recent runs</span>
+    <strong>{{ runs|length }}</strong>
+  </article>
+  <article class="metric">
+    <span>Recent decisions</span>
+    <strong>{{ decisions|length }}</strong>
+  </article>
+  <article class="metric">
+    <span>Recent orders</span>
+    <strong>{{ orders|length }}</strong>
+  </article>
+  <article class="metric">
+    <span>Tracked positions</span>
+    <strong>{{ positions|length }}</strong>
+  </article>
+</section>
+
+<section class="grid two">
+  <article class="card">
+    <h2>Runtime</h2>
+    {% if config %}
+      <dl>
+      {% for key, value in config.items() %}
+        <dt>{{ key }}</dt><dd>{{ value }}</dd>
+      {% endfor %}
+      </dl>
+    {% else %}
+      <p class="empty">No runtime config saved yet.</p>
+    {% endif %}
+  </article>
+  <article class="card">
+    <h2>Latest Positions</h2>
+    {% if positions %}
+      <table>
+        <thead><tr><th>Symbol</th><th>Mode</th><th>Side</th><th>Qty</th></tr></thead>
+        <tbody>
+        {% for item in positions %}
+          <tr><td>{{ item.symbol }}</td><td>{{ item.mode }}</td><td>{{ item.side }}</td><td>{{ item.quantity }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="empty">No positions recorded.</p>
+    {% endif %}
+  </article>
+</section>
+
+<section class="card">
+  <h2>Recent Runs</h2>
+  {% for run in runs %}
+    <a class="row-link" href="/runs/{{ run.run_id }}">{{ run.run_id }} · {{ run.symbol }} · {{ run.status }} · {{ run.metadata.decision if run.metadata else "" }}</a>
+  {% else %}
+    <p class="empty">No strategy runs recorded.</p>
+  {% endfor %}
+</section>
+
+<section class="grid two">
+  <article class="card">
+    <h2>Recent Decisions</h2>
+    {% if decisions %}
+      <table>
+        <thead><tr><th>Run</th><th>Symbol</th><th>Decision</th><th>Confidence</th></tr></thead>
+        <tbody>
+        {% for decision in decisions %}
+          <tr>
+            <td>{{ decision.run_id }}</td>
+            <td>{{ decision.symbol }}</td>
+            <td>{{ decision.decision }}</td>
+            <td>{{ decision.confidence }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="empty">No decisions recorded.</p>
+    {% endif %}
+  </article>
+  <article class="card">
+    <h2>Recent Orders</h2>
+    {% if orders %}
+      <table>
+        <thead><tr><th>Symbol</th><th>Side</th><th>Status</th><th>Qty</th></tr></thead>
+        <tbody>
+        {% for order in orders %}
+          <tr><td>{{ order.symbol }}</td><td>{{ order.side }}</td><td>{{ order.status }}</td><td>{{ order.quantity }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="empty">No orders recorded.</p>
+    {% endif %}
+  </article>
+</section>
+
+<section class="card danger">
+  <h2>Recent Errors</h2>
+  {% if errors %}
+    {% for log in errors %}
+      <pre>{{ log | pretty_json }}</pre>
+    {% endfor %}
+  {% else %}
+    <p class="empty">No error logs.</p>
+  {% endif %}
+</section>
+{% endblock %}

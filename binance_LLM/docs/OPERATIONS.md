@@ -95,6 +95,32 @@ LANGSMITH_TRACING=true
 LANGSMITH_PROJECT=auto-trade-coin
 ```
 
+## Read-Only Dashboard
+
+The dashboard is a separate FastAPI process and does not submit, cancel, or modify orders. It reads MongoDB collections for recent strategy runs, LLM decisions, orders, positions, execution logs, and runtime config.
+
+Required settings:
+
+- `DASHBOARD_ENABLED=true`
+- `DASHBOARD_USERNAME=<operator name>`
+- `DASHBOARD_PASSWORD=<strong password>`
+- `DASHBOARD_HOST=0.0.0.0`
+- `DASHBOARD_PORT=8080`
+
+Run locally:
+
+```bash
+python -m app.dashboard.main
+```
+
+Run with Docker Compose:
+
+```bash
+docker compose --profile dashboard up --build dashboard
+```
+
+Open `http://localhost:8080/dashboard`. Keep the dashboard behind a private network, VPN, or reverse proxy with TLS; Basic Auth is an access gate, not a full perimeter security layer.
+
 ## Failure Behavior
 
 The pipeline stops before order execution if market data collection, indicator calculation, context building, or LLM parsing fails. If live entry succeeds but protective order placement fails, the executor cancels open orders and attempts a reduce-only rollback market order.

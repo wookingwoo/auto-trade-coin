@@ -13,6 +13,7 @@ An LLM-driven Binance USD-M futures trading MVP that collects market data every 
 - Prevents duplicate execution within the same scheduler slot by using an idempotency key.
 - Places live protective `STOP_MARKET` and `TAKE_PROFIT_MARKET` close-position orders after entry.
 - Persists market snapshots, indicators, decisions, orders, positions, logs, and run metadata in MongoDB Atlas.
+- Provides an optional read-only web dashboard for runs, LLM decisions, orders, positions, and execution logs.
 - Emits traces to LangSmith when tracing is enabled.
 
 ## MVP Scope
@@ -51,6 +52,7 @@ app/
   models/           # Domain models and enums
   prompts/          # LLM prompt templates and prompt versioning
   repositories/     # MongoDB persistence logic
+  dashboard/        # Optional FastAPI/Jinja read-only operations dashboard
   schemas/          # Pydantic schemas for context and LLM output
   services/         # Market, indicator, news, decision, execution orchestration
   utils/            # Numeric helpers
@@ -95,6 +97,7 @@ Copy `.env.example` to `.env` and configure at least:
 - `ENABLE_PROTECTIVE_ORDERS`
 - `PROTECTIVE_ORDER_WORKING_TYPE`
 - `REQUIRE_PROTECTIVE_ORDER_PARAMS`
+- `DASHBOARD_ENABLED`, `DASHBOARD_USERNAME`, and `DASHBOARD_PASSWORD` when running the dashboard
 
 ## Quick Start
 
@@ -125,6 +128,17 @@ TRADING_MODE=live LIVE_TRADING_ACK=true python -m app.main \
   --cancel-existing-orders false
 ```
 
+Run the read-only dashboard:
+
+```bash
+DASHBOARD_ENABLED=true \
+DASHBOARD_USERNAME=operator \
+DASHBOARD_PASSWORD='replace-with-a-strong-password' \
+python -m app.dashboard.main
+```
+
+Then open `http://localhost:8080/dashboard` and authenticate with Basic Auth.
+
 ## Docker
 
 Build and run:
@@ -138,6 +152,12 @@ Or use:
 
 ```bash
 docker compose up --build
+```
+
+Start the optional dashboard service:
+
+```bash
+docker compose --profile dashboard up --build dashboard
 ```
 
 ## Trading Modes

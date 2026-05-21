@@ -70,6 +70,12 @@ class Settings(BaseSettings):
     decision_history_limit: int = Field(default=5, alias="DECISION_HISTORY_LIMIT")
     run_interval_minutes: int = Field(default=60, ge=1, alias="RUN_INTERVAL_MINUTES")
 
+    dashboard_enabled: bool = Field(default=False, alias="DASHBOARD_ENABLED")
+    dashboard_username: str | None = Field(default=None, alias="DASHBOARD_USERNAME")
+    dashboard_password: str | None = Field(default=None, alias="DASHBOARD_PASSWORD")
+    dashboard_host: str = Field(default="0.0.0.0", alias="DASHBOARD_HOST")
+    dashboard_port: int = Field(default=8080, ge=1, le=65535, alias="DASHBOARD_PORT")
+
     @field_validator("trading_symbols", mode="before")
     @classmethod
     def parse_symbols(cls, value: str | list[str]) -> list[str]:
