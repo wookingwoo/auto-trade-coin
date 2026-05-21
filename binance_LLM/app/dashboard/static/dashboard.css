@@ -1,13 +1,13 @@
 :root {
-  --bg: #07100d;
-  --panel: #10201b;
-  --panel-strong: #18342b;
-  --line: #2a5748;
-  --text: #eef8ee;
-  --muted: #91aa9d;
-  --accent: #c8f560;
-  --danger: #ff6b4a;
-  --control: #203e34;
+  --bg: #080c16;
+  --panel: #101827;
+  --panel-strong: #172235;
+  --line: #2d3b52;
+  --text: #eef4ff;
+  --muted: #91a1b8;
+  --accent: #63a7ff;
+  --danger: #ff7a45;
+  --control: #152033;
 }
 
 * {
@@ -18,8 +18,9 @@ body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(circle at 20% 10%, rgba(200, 245, 96, 0.16), transparent 30rem),
-    linear-gradient(135deg, #07100d 0%, #0b1713 60%, #14291f 100%);
+    radial-gradient(circle at 18% 8%, rgba(99, 167, 255, 0.18), transparent 32rem),
+    radial-gradient(circle at 78% 18%, rgba(75, 97, 255, 0.10), transparent 28rem),
+    linear-gradient(135deg, #080c16 0%, #0d1422 58%, #111d31 100%);
   color: var(--text);
   font-family: "IBM Plex Sans", "Aptos", sans-serif;
 }
@@ -30,7 +31,7 @@ body {
   width: 220px;
   padding: 28px;
   border-right: 1px solid var(--line);
-  background: rgba(7, 16, 13, 0.86);
+  background: rgba(8, 12, 22, 0.88);
 }
 
 .brand {
@@ -94,9 +95,9 @@ h1 {
 
 .metric {
   padding: 18px;
-  border: 1px solid rgba(200, 245, 96, 0.2);
+  border: 1px solid rgba(99, 167, 255, 0.24);
   border-radius: 20px;
-  background: rgba(200, 245, 96, 0.08);
+  background: rgba(99, 167, 255, 0.08);
 }
 
 .metric span {
@@ -129,12 +130,12 @@ h1 {
   padding: 22px;
   border: 1px solid var(--line);
   border-radius: 24px;
-  background: linear-gradient(180deg, rgba(16, 32, 27, 0.94), rgba(10, 22, 18, 0.94));
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.24);
+  background: linear-gradient(180deg, rgba(16, 24, 39, 0.95), rgba(10, 16, 27, 0.95));
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
 }
 
 .danger {
-  border-color: rgba(255, 107, 74, 0.45);
+  border-color: rgba(255, 122, 69, 0.46);
 }
 
 h2 {
@@ -166,7 +167,7 @@ table {
 th,
 td {
   padding: 12px 10px;
-  border-top: 1px solid rgba(145, 170, 157, 0.18);
+  border-top: 1px solid rgba(145, 161, 184, 0.18);
   text-align: left;
   vertical-align: top;
 }
@@ -185,7 +186,7 @@ a {
 .row-link {
   display: block;
   padding: 12px 0;
-  border-top: 1px solid rgba(145, 170, 157, 0.2);
+  border-top: 1px solid rgba(145, 161, 184, 0.2);
   color: var(--text);
   text-decoration: none;
 }
@@ -200,7 +201,7 @@ pre {
   padding: 16px;
   border-radius: 16px;
   background: rgba(0, 0, 0, 0.22);
-  color: #d7ead8;
+  color: #dbe8ff;
 }
 
 .empty {
@@ -214,9 +215,9 @@ pre {
   gap: 12px;
   margin-bottom: 18px;
   padding: 16px;
-  border: 1px solid rgba(145, 170, 157, 0.18);
+  border: 1px solid rgba(145, 161, 184, 0.18);
   border-radius: 20px;
-  background: rgba(16, 32, 27, 0.72);
+  background: rgba(16, 24, 39, 0.76);
 }
 
 .filter-bar label {
@@ -241,9 +242,9 @@ pre {
 .filter-bar button,
 .filter-bar a {
   padding: 11px 14px;
-  border: 1px solid rgba(200, 245, 96, 0.45);
+  border: 1px solid rgba(99, 167, 255, 0.48);
   border-radius: 12px;
-  background: rgba(200, 245, 96, 0.12);
+  background: rgba(99, 167, 255, 0.12);
   color: var(--accent);
   font: inherit;
   text-decoration: none;
