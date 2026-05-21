@@ -30,12 +30,60 @@ def test_preflight_requires_openai_key() -> None:
         preflight._check_llm(settings)
 
 
+def test_runtime_settings_reject_live_mode_without_explicit_ack() -> None:
+    settings = Settings(
+        mongodb_uri="mongodb://localhost:27017",
+        llm_provider="openai",
+        openai_api_key="dummy",
+        trading_mode=TradingMode.LIVE,
+        binance_api_key="key",
+        binance_api_secret="secret",
+        enable_protective_orders=True,
+    )
+
+    with pytest.raises(PreflightCheckError, match="LIVE_TRADING_ACK"):
+        preflight.validate_runtime_settings(settings)
+
+
+def test_runtime_settings_reject_live_mode_without_protective_orders() -> None:
+    settings = Settings(
+        mongodb_uri="mongodb://localhost:27017",
+        llm_provider="openai",
+        openai_api_key="dummy",
+        trading_mode=TradingMode.LIVE,
+        live_trading_ack=True,
+        binance_api_key="key",
+        binance_api_secret="secret",
+        enable_protective_orders=False,
+    )
+
+    with pytest.raises(PreflightCheckError, match="ENABLE_PROTECTIVE_ORDERS"):
+        preflight.validate_runtime_settings(settings)
+
+
+def test_runtime_settings_reject_default_leverage_above_configured_max() -> None:
+    settings = Settings(
+        mongodb_uri="mongodb://localhost:27017",
+        llm_provider="openai",
+        openai_api_key="dummy",
+        trading_mode=TradingMode.DRY_RUN,
+        default_leverage=4,
+        max_leverage=3,
+    )
+
+    with pytest.raises(PreflightCheckError, match="DEFAULT_LEVERAGE"):
+        preflight.validate_runtime_settings(settings)
+
+
 def test_run_preflight_includes_live_private_check(monkeypatch: pytest.MonkeyPatch) -> None:
     settings = Settings(
         mongodb_uri="mongodb://localhost:27017",
         llm_provider="openai",
         openai_api_key="dummy",
         trading_mode=TradingMode.LIVE,
+        live_trading_ack=True,
+        binance_api_key="key",
+        binance_api_secret="secret",
     )
     called = {"mongodb": 0, "public": 0, "private": 0, "llm": 0}
 
@@ -53,4 +101,3 @@ def test_run_preflight_includes_live_private_check(monkeypatch: pytest.MonkeyPat
         "llm": "ok",
     }
     assert called == {"mongodb": 1, "public": 1, "private": 1, "llm": 1}
-

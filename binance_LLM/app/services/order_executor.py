@@ -36,36 +36,83 @@ class OrderExecutor:
         )
 
         if decision.decision == DecisionType.HOLD:
-            return OrderExecutionResult(
-                run_id=run_id,
-                symbol=snapshot.symbol,
-                mode=self.settings.trading_mode,
-                decision=decision.decision,
-                status=OrderStatus.SKIPPED,
-                executed_at=datetime.now(tz=UTC),
+            return self._skipped_result(
+                run_id,
+                snapshot,
+                position_state,
+                decision,
                 message="Decision was hold. No order submitted.",
-                resulting_side=position_state.side,
-                resulting_quantity=position_state.quantity,
-                resulting_entry_price=position_state.entry_price,
-                paper_balance=position_state.available_balance if self.settings.trading_mode == TradingMode.DRY_RUN else None,
+            )
+
+        if decision.confidence < self.settings.min_decision_confidence:
+            return self._skipped_result(
+                run_id,
+                snapshot,
+                position_state,
+                decision,
+                message=(
+                    "Decision confidence is below configured minimum "
+                    f"({decision.confidence:.2f} < {self.settings.min_decision_confidence:.2f})."
+                ),
             )
 
         if target_side == position_state.side and position_state.quantity != 0:
-            return OrderExecutionResult(
-                run_id=run_id,
-                symbol=snapshot.symbol,
-                mode=self.settings.trading_mode,
-                decision=decision.decision,
-                status=OrderStatus.SKIPPED,
-                executed_at=datetime.now(tz=UTC),
+            return self._skipped_result(
+                run_id,
+                snapshot,
+                position_state,
+                decision,
                 message="Current position already matches the decision side. Re-entry is skipped in MVP.",
-                resulting_side=position_state.side,
-                resulting_quantity=position_state.quantity,
-                resulting_entry_price=position_state.entry_price,
-                paper_balance=position_state.available_balance if self.settings.trading_mode == TradingMode.DRY_RUN else None,
             )
 
-        leverage = min(max(decision.recommended_leverage, 1), 125)
+        if position_state.consecutive_losses >= self.settings.max_consecutive_losses:
+            return self._skipped_result(
+                run_id,
+                snapshot,
+                position_state,
+                decision,
+                message=(
+                    "Current position state has reached the configured consecutive loss limit "
+                    f"({position_state.consecutive_losses} >= {self.settings.max_consecutive_losses})."
+                ),
+            )
+
+        if self.settings.require_protective_order_params and (
+            decision.stop_loss_pct <= 0 or decision.take_profit_pct <= 0
+        ):
+            return self._skipped_result(
+                run_id,
+                snapshot,
+                position_state,
+                decision,
+                message="Trade decision is missing required protective risk parameters.",
+            )
+
+        if decision.stop_loss_pct > self.settings.max_stop_loss_pct:
+            return self._skipped_result(
+                run_id,
+                snapshot,
+                position_state,
+                decision,
+                message=(
+                    "Decision stop-loss percentage exceeds configured maximum "
+                    f"({decision.stop_loss_pct:.4f} > {self.settings.max_stop_loss_pct:.4f})."
+                ),
+            )
+
+        if decision.take_profit_pct > self.settings.max_take_profit_pct:
+            return self._skipped_result(
+                run_id,
+                snapshot,
+                position_state,
+                decision,
+                message=(
+                    "Decision take-profit percentage exceeds configured maximum "
+                    f"({decision.take_profit_pct:.4f} > {self.settings.max_take_profit_pct:.4f})."
+                ),
+            )
+
+        leverage = min(max(decision.recommended_leverage, 1), self.settings.max_leverage)
         size_pct = clamp(decision.position_size_pct, 0.0, self.settings.max_position_size_pct)
         current_price = snapshot.current_price
         reference_price = snapshot.mark_price if self.settings.trading_mode == TradingMode.LIVE and snapshot.mark_price else current_price
@@ -82,23 +129,39 @@ class OrderExecutor:
             effective_notional = quantity * reference_price
 
         if quantity < snapshot.symbol_rules.min_qty or effective_notional < snapshot.symbol_rules.min_notional:
-            return OrderExecutionResult(
-                run_id=run_id,
-                symbol=snapshot.symbol,
-                mode=self.settings.trading_mode,
-                decision=decision.decision,
-                status=OrderStatus.SKIPPED,
-                executed_at=datetime.now(tz=UTC),
+            return self._skipped_result(
+                run_id,
+                snapshot,
+                position_state,
+                decision,
                 message="Calculated order size is below Binance minimum filters.",
-                resulting_side=position_state.side,
-                resulting_quantity=position_state.quantity,
-                resulting_entry_price=position_state.entry_price,
-                paper_balance=position_state.available_balance if self.settings.trading_mode == TradingMode.DRY_RUN else None,
             )
 
         if self.settings.trading_mode == TradingMode.DRY_RUN:
             return self._simulate(run_id, snapshot, position_state, decision, quantity, leverage)
         return self._execute_live(run_id, snapshot, position_state, decision, quantity, leverage)
+
+    def _skipped_result(
+        self,
+        run_id: str,
+        snapshot: MarketSnapshot,
+        position_state: PositionState,
+        decision: LLMDecision,
+        message: str,
+    ) -> OrderExecutionResult:
+        return OrderExecutionResult(
+            run_id=run_id,
+            symbol=snapshot.symbol,
+            mode=self.settings.trading_mode,
+            decision=decision.decision,
+            status=OrderStatus.SKIPPED,
+            executed_at=datetime.now(tz=UTC),
+            message=message,
+            resulting_side=position_state.side,
+            resulting_quantity=position_state.quantity,
+            resulting_entry_price=position_state.entry_price,
+            paper_balance=position_state.available_balance if self.settings.trading_mode == TradingMode.DRY_RUN else None,
+        )
 
     def _simulate(
         self,

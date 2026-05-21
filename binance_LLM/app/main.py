@@ -13,7 +13,7 @@ from app.services.market_data import BinanceMarketDataService
 from app.services.news_signal import NewsSignalService
 from app.services.order_executor import OrderExecutor
 from app.services.position_manager import PositionManager
-from app.services.preflight import run_preflight
+from app.services.preflight import run_preflight, validate_runtime_settings
 from app.services.technical_indicators import TechnicalIndicatorService
 from app.services.trading_context_builder import TradingContextBuilder
 from app.services.trading_decision_agent import TradingDecisionAgent
@@ -25,6 +25,7 @@ def build_orchestrator() -> tuple[Settings, TradingOrchestrator]:
 
     settings = get_settings()
     setup_logging(settings.log_level)
+    validate_runtime_settings(settings)
 
     mongo = MongoDatabase(settings)
     repository = TradingRepository(mongo.db)

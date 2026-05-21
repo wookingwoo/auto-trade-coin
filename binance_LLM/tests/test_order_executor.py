@@ -153,6 +153,141 @@ def _decision(decision: DecisionType) -> LLMDecision:
     )
 
 
+def test_order_executor_skips_low_confidence_trade_decision() -> None:
+    settings = Settings(
+        mongodb_uri="mongodb://localhost:27017",
+        openai_api_key="test-key",
+        trading_mode=TradingMode.DRY_RUN,
+        trading_symbols=["BTCUSDT"],
+        min_decision_confidence=0.75,
+    )
+    client = DummyBinanceClient()
+    executor = OrderExecutor(settings, client)
+    position = PositionState(
+        mode=TradingMode.DRY_RUN,
+        symbol="BTCUSDT",
+        captured_at=datetime.now(tz=UTC),
+        available_balance=10_000,
+        wallet_balance=10_000,
+        leverage=1,
+        side=PositionSide.FLAT,
+        quantity=0,
+    )
+    decision = _decision(DecisionType.LONG).model_copy(update={"confidence": 0.6})
+
+    result = executor.execute("run-1", _snapshot(), position, decision)
+
+    assert result.status.value == "skipped"
+    assert "below configured minimum" in result.message
+    assert result.resulting_side == PositionSide.FLAT
+    assert client.calls == []
+
+
+def test_order_executor_clamps_leverage_to_configured_max() -> None:
+    settings = Settings(
+        mongodb_uri="mongodb://localhost:27017",
+        openai_api_key="test-key",
+        trading_mode=TradingMode.DRY_RUN,
+        trading_symbols=["BTCUSDT"],
+        max_leverage=3,
+    )
+    executor = OrderExecutor(settings, DummyBinanceClient())
+    position = PositionState(
+        mode=TradingMode.DRY_RUN,
+        symbol="BTCUSDT",
+        captured_at=datetime.now(tz=UTC),
+        available_balance=10_000,
+        wallet_balance=10_000,
+        leverage=1,
+        side=PositionSide.FLAT,
+        quantity=0,
+    )
+    decision = _decision(DecisionType.LONG).model_copy(update={"recommended_leverage": 20})
+
+    result = executor.execute("run-1", _snapshot(), position, decision)
+
+    assert result.status.value == "simulated"
+    assert result.order_requests[0].leverage == 3
+    assert result.order_requests[0].quantity == 0.05
+
+
+def test_order_executor_requires_stop_loss_and_take_profit_for_trade_decisions() -> None:
+    executor = OrderExecutor(_settings(), DummyBinanceClient())
+    position = PositionState(
+        mode=TradingMode.DRY_RUN,
+        symbol="BTCUSDT",
+        captured_at=datetime.now(tz=UTC),
+        available_balance=10_000,
+        wallet_balance=10_000,
+        leverage=1,
+        side=PositionSide.FLAT,
+        quantity=0,
+    )
+    decision = _decision(DecisionType.LONG).model_copy(update={"stop_loss_pct": 0.0})
+
+    result = executor.execute("run-1", _snapshot(), position, decision)
+
+    assert result.status.value == "skipped"
+    assert "protective risk parameters" in result.message
+    assert result.order_requests == []
+
+
+def test_order_executor_skips_stop_loss_above_configured_maximum() -> None:
+    settings = Settings(
+        mongodb_uri="mongodb://localhost:27017",
+        openai_api_key="test-key",
+        trading_mode=TradingMode.DRY_RUN,
+        trading_symbols=["BTCUSDT"],
+        max_stop_loss_pct=0.03,
+    )
+    executor = OrderExecutor(settings, DummyBinanceClient())
+    position = PositionState(
+        mode=TradingMode.DRY_RUN,
+        symbol="BTCUSDT",
+        captured_at=datetime.now(tz=UTC),
+        available_balance=10_000,
+        wallet_balance=10_000,
+        leverage=1,
+        side=PositionSide.FLAT,
+        quantity=0,
+    )
+    decision = _decision(DecisionType.LONG).model_copy(update={"stop_loss_pct": 0.05})
+
+    result = executor.execute("run-1", _snapshot(), position, decision)
+
+    assert result.status.value == "skipped"
+    assert "stop-loss percentage exceeds" in result.message
+    assert result.order_requests == []
+
+
+def test_order_executor_skips_after_consecutive_loss_limit() -> None:
+    settings = Settings(
+        mongodb_uri="mongodb://localhost:27017",
+        openai_api_key="test-key",
+        trading_mode=TradingMode.DRY_RUN,
+        trading_symbols=["BTCUSDT"],
+        max_consecutive_losses=2,
+    )
+    executor = OrderExecutor(settings, DummyBinanceClient())
+    position = PositionState(
+        mode=TradingMode.DRY_RUN,
+        symbol="BTCUSDT",
+        captured_at=datetime.now(tz=UTC),
+        available_balance=10_000,
+        wallet_balance=10_000,
+        leverage=1,
+        side=PositionSide.FLAT,
+        quantity=0,
+        consecutive_losses=2,
+    )
+
+    result = executor.execute("run-1", _snapshot(), position, _decision(DecisionType.LONG))
+
+    assert result.status.value == "skipped"
+    assert "consecutive loss limit" in result.message
+    assert result.order_requests == []
+
+
 def test_order_executor_simulates_long_from_flat() -> None:
     executor = OrderExecutor(_settings(), DummyBinanceClient())
     position = PositionState(

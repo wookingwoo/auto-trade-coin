@@ -17,6 +17,7 @@ def run_preflight(settings: Settings, symbol: str) -> dict:
 
     checks: dict[str, str] = {}
 
+    validate_runtime_settings(settings)
     checks["mongodb"] = _check_mongodb(settings)
     checks["binance_public"] = _check_binance_public(settings, symbol)
 
@@ -25,6 +26,39 @@ def run_preflight(settings: Settings, symbol: str) -> dict:
 
     checks["llm"] = _check_llm(settings)
     return checks
+
+
+def validate_runtime_settings(settings: Settings) -> str:
+    """Validate safety-critical runtime settings before any external side effect."""
+
+    if not settings.trading_symbols:
+        raise PreflightCheckError("TRADING_SYMBOLS must contain at least one symbol.")
+
+    if settings.default_leverage > settings.max_leverage:
+        raise PreflightCheckError("DEFAULT_LEVERAGE cannot be greater than MAX_LEVERAGE.")
+
+    if settings.protective_order_working_type not in {"MARK_PRICE", "CONTRACT_PRICE"}:
+        raise PreflightCheckError("PROTECTIVE_ORDER_WORKING_TYPE must be MARK_PRICE or CONTRACT_PRICE.")
+
+    if settings.trading_mode == TradingMode.LIVE:
+        if not settings.live_trading_ack:
+            raise PreflightCheckError(
+                "LIVE_TRADING_ACK must be true before TRADING_MODE=live can run."
+            )
+        if not settings.binance_api_key or not settings.binance_api_secret:
+            raise PreflightCheckError(
+                "BINANCE_API_KEY and BINANCE_API_SECRET are required for TRADING_MODE=live."
+            )
+        if not settings.enable_protective_orders:
+            raise PreflightCheckError(
+                "ENABLE_PROTECTIVE_ORDERS must be true for TRADING_MODE=live."
+            )
+        if not settings.require_protective_order_params:
+            raise PreflightCheckError(
+                "REQUIRE_PROTECTIVE_ORDER_PARAMS must be true for TRADING_MODE=live."
+            )
+
+    return "ok"
 
 
 def _check_mongodb(settings: Settings) -> str:

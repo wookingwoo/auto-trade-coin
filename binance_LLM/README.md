@@ -85,9 +85,16 @@ Copy `.env.example` to `.env` and configure at least:
 - `TRADING_SYMBOLS`
 - `BINANCE_API_KEY`
 - `BINANCE_API_SECRET`
+- `MAX_LEVERAGE`
+- `MIN_DECISION_CONFIDENCE`
+- `MAX_STOP_LOSS_PCT`
+- `MAX_TAKE_PROFIT_PCT`
+- `MAX_CONSECUTIVE_LOSSES`
+- `LIVE_TRADING_ACK` must be `true` before `TRADING_MODE=live` can start
 - `LANGSMITH_API_KEY` when tracing is enabled
 - `ENABLE_PROTECTIVE_ORDERS`
 - `PROTECTIVE_ORDER_WORKING_TYPE`
+- `REQUIRE_PROTECTIVE_ORDER_PARAMS`
 
 ## Quick Start
 
@@ -135,10 +142,17 @@ pytest
 
 - If data collection fails, the run stops before order execution.
 - If LLM parsing fails, the run stops before order execution.
+- If a trade decision confidence is below `MIN_DECISION_CONFIDENCE`, the order is skipped.
+- If a trade decision is missing stop-loss or take-profit percentages while `REQUIRE_PROTECTIVE_ORDER_PARAMS=true`, the order is skipped.
+- If a trade decision exceeds `MAX_STOP_LOSS_PCT` or `MAX_TAKE_PROFIT_PCT`, the order is skipped.
+- If the paper/live position state has reached `MAX_CONSECUTIVE_LOSSES`, new trade entries are skipped.
+- In live mode, startup fails unless `LIVE_TRADING_ACK=true`, Binance credentials are present, and protective orders are enabled.
 - If the same symbol is triggered twice in the same scheduler slot, the later run is skipped as a duplicate.
 - If Binance order submission fails in live mode, the error is persisted in `execution_logs`.
 - If protective order placement fails after a live entry, the executor attempts to flatten the newly opened position.
 - Every major stage is recorded with a shared `run_id`.
+
+See [docs/OPERATIONS.md](docs/OPERATIONS.md) before enabling live trading.
 
 ## Next Steps
 
