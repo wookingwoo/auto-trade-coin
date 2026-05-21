@@ -24,6 +24,31 @@ Live mode is intentionally blocked unless all of these are true:
 
 Keep `MAX_LEVERAGE` low. The default is `3`, and `OrderExecutor` clamps LLM leverage recommendations to this value.
 
+## Live Smoke Order
+
+Use `--live-smoke-order` for an explicit real-order test that bypasses the LLM trading loop. The safe default is `--cancel-existing-orders false`; in that mode the command aborts if the symbol already has a position or open orders.
+
+BTCUSDT currently requires roughly `0.001 BTC` minimum order size. At a BTC mark price near `77,000 USDT`, use `--max-notional 80` or higher and keep enough futures wallet balance for margin and fees.
+
+Example:
+
+```bash
+TRADING_MODE=live \
+LIVE_TRADING_ACK=true \
+ENABLE_PROTECTIVE_ORDERS=true \
+REQUIRE_PROTECTIVE_ORDER_PARAMS=true \
+python -m app.main \
+  --live-smoke-order \
+  --symbol BTCUSDT \
+  --side BUY \
+  --max-notional 80 \
+  --stop-loss-pct 0.01 \
+  --take-profit-pct 0.02 \
+  --cancel-existing-orders false
+```
+
+The smoke command submits one market entry and then close-position `STOP_MARKET` and `TAKE_PROFIT_MARKET` orders. If protective order placement fails, it cancels only protective algo orders created by that smoke run and attempts a reduce-only rollback market order.
+
 ## Decision Guardrails
 
 The executor skips trade decisions that do not satisfy these runtime rules:

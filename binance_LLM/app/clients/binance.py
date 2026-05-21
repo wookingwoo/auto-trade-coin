@@ -156,6 +156,24 @@ class BinanceFuturesClient:
         )
         return list(payload)
 
+    def get_open_orders(self, symbol: str) -> list[dict]:
+        payload = self._request(
+            "GET",
+            "/fapi/v1/openOrders",
+            params={"symbol": symbol},
+            signed=True,
+        )
+        return list(payload)
+
+    def get_open_algo_orders(self, symbol: str) -> list[dict]:
+        payload = self._request(
+            "GET",
+            "/fapi/v1/openAlgoOrders",
+            params={"symbol": symbol},
+            signed=True,
+        )
+        return list(payload)
+
     def change_leverage(self, symbol: str, leverage: int) -> dict:
         return self._request(
             "POST",
@@ -177,6 +195,14 @@ class BinanceFuturesClient:
             "DELETE",
             "/fapi/v1/algoOpenOrders",
             params={"symbol": symbol},
+            signed=True,
+        )
+
+    def cancel_algo_order(self, client_algo_id: str) -> dict:
+        return self._request(
+            "DELETE",
+            "/fapi/v1/algoOrder",
+            params={"clientAlgoId": client_algo_id},
             signed=True,
         )
 

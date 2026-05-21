@@ -6,7 +6,7 @@ import json
 from app.clients.binance import BinanceFuturesClient
 from app.clients.mongo import MongoDatabase
 from app.config import Settings, get_settings
-from app.exceptions import PreflightCheckError
+from app.exceptions import OrderExecutionError, PreflightCheckError
 from app.logging import setup_logging
 from app.repositories.trading_repository import TradingRepository
 from app.services.market_data import BinanceMarketDataService
@@ -18,6 +18,7 @@ from app.services.technical_indicators import TechnicalIndicatorService
 from app.services.trading_context_builder import TradingContextBuilder
 from app.services.trading_decision_agent import TradingDecisionAgent
 from app.services.trading_orchestrator import TradingOrchestrator
+from app.services.live_smoke_order import LiveSmokeOrderRequest, LiveSmokeOrderService
 
 
 def build_orchestrator() -> tuple[Settings, TradingOrchestrator]:
@@ -50,6 +51,17 @@ def main() -> None:
     parser.add_argument("--once", action="store_true", help="Run the pipeline once and exit.")
     parser.add_argument("--symbol", help="Optional single symbol override.")
     parser.add_argument("--preflight", action="store_true", help="Run dependency preflight checks and exit.")
+    parser.add_argument("--live-smoke-order", action="store_true", help="Submit one explicit live smoke-test order.")
+    parser.add_argument("--side", choices=["BUY", "SELL"], help="Smoke order side.")
+    parser.add_argument("--max-notional", type=float, help="Maximum smoke order notional in USDT.")
+    parser.add_argument("--stop-loss-pct", type=float, help="Smoke order stop-loss percentage.")
+    parser.add_argument("--take-profit-pct", type=float, help="Smoke order take-profit percentage.")
+    parser.add_argument(
+        "--cancel-existing-orders",
+        choices=["true", "false"],
+        default="false",
+        help="Whether the smoke order may cancel existing orders for the symbol.",
+    )
     args = parser.parse_args()
 
     settings = get_settings()
@@ -63,6 +75,36 @@ def main() -> None:
             print(json.dumps({"status": "failed", "error": str(exc)}))
             raise SystemExit(1) from exc
         print(json.dumps({"status": "ok", "checks": result}))
+        return
+
+    if args.live_smoke_order:
+        missing = [
+            name
+            for name, value in {
+                "--symbol": args.symbol,
+                "--side": args.side,
+                "--max-notional": args.max_notional,
+                "--stop-loss-pct": args.stop_loss_pct,
+                "--take-profit-pct": args.take_profit_pct,
+            }.items()
+            if value is None
+        ]
+        if missing:
+            parser.error(f"--live-smoke-order requires: {', '.join(missing)}")
+        request = LiveSmokeOrderRequest(
+            symbol=args.symbol.upper(),
+            side=args.side,
+            max_notional=args.max_notional,
+            stop_loss_pct=args.stop_loss_pct,
+            take_profit_pct=args.take_profit_pct,
+            cancel_existing_orders=args.cancel_existing_orders == "true",
+        )
+        try:
+            result = LiveSmokeOrderService(settings, BinanceFuturesClient(settings)).execute(request)
+        except OrderExecutionError as exc:
+            print(json.dumps({"status": "failed", "error": str(exc)}))
+            raise SystemExit(1) from exc
+        print(json.dumps(result.model_dump(mode="json")))
         return
 
     _, orchestrator = build_orchestrator()

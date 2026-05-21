@@ -112,6 +112,19 @@ Run the in-process scheduler:
 python -m app.scheduler
 ```
 
+Run an explicit live smoke order outside the LLM loop:
+
+```bash
+TRADING_MODE=live LIVE_TRADING_ACK=true python -m app.main \
+  --live-smoke-order \
+  --symbol BTCUSDT \
+  --side BUY \
+  --max-notional 80 \
+  --stop-loss-pct 0.01 \
+  --take-profit-pct 0.02 \
+  --cancel-existing-orders false
+```
+
 ## Docker
 
 Build and run:
