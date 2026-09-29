@@ -339,6 +339,9 @@ class TradingRunner:
                 if not intent:
                     self.journal.halt("position_without_intent")
                     return
+                if intent["status"] == "EXITING":
+                    self.executor.exit(slot_key, position["symbol"])
+                    return
                 if now_ms - intent["created_ms"] >= 4 * 3_600_000:
                     self.executor.exit(slot_key, position["symbol"])
                     return

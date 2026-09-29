@@ -53,6 +53,22 @@ class BinanceTests(unittest.TestCase):
         with self.assertRaises(UnknownOrderOutcome):
             self.make_client(handler).place_ioc("BTCUSDT", "BUY", Decimal("0.001"), Decimal("50000"), "jv-test")
 
+    def test_mutating_timeout_and_server_errors_remain_unknown(self):
+        responses = (
+            httpx.Response(500, json={"code": -1007, "msg": "execution status unknown"}),
+            httpx.Response(408, json={"code": -1007, "msg": "backend timeout"}),
+            httpx.Response(400, json={"code": -1006, "msg": "unexpected response"}),
+            httpx.Response(200, text="incomplete response"),
+        )
+        for response in responses:
+            with self.subTest(status=response.status_code):
+                client = self.make_client(lambda request: response)
+                try:
+                    with self.assertRaises(UnknownOrderOutcome):
+                        client.place_ioc("BTCUSDT", "BUY", Decimal("0.001"), Decimal("50000"), "jv-test")
+                finally:
+                    client.close()
+
     def test_market_exit_is_reduce_only(self):
         seen = []
 

@@ -128,6 +128,27 @@ class RunnerTests(unittest.TestCase):
             self.assertEqual(journal.get("open_slot"), slot)
             journal.close()
 
+    def test_risk_watcher_resumes_partial_exit_without_waiting_four_hours(self):
+        from tests.test_execution import FakeExchange
+
+        with tempfile.TemporaryDirectory() as folder:
+            journal = Journal(Path(folder) / "state.db")
+            journal.initialize(D("1000"), "2026-09-29")
+            exchange = FakeExchange()
+            exchange.quantity = D("0.003")
+            exchange.get_account = lambda: {"totalMarginBalance": "1000"}
+            runner = TradingRunner(Settings("paper", "", "", "key", journal.path), exchange, journal)
+            slot = "paper:v1:BTCUSDT:100:e"
+            journal.begin_intent(slot, "jv-entry", "BTCUSDT", "LONG", "0.003", "49500", "51000")
+            journal.update_intent(slot, "EXITING")
+            journal.set("open_slot", slot)
+            try:
+                with patch.object(runner.executor, "exit", return_value="EXITING") as resume:
+                    runner.risk_tick()
+                resume.assert_called_once_with(slot, "BTCUSDT")
+            finally:
+                journal.close()
+
     def test_live_transfer_halts_before_new_entry(self):
         class TransferExchange:
             def get_income_history(self, start_ms, end_ms, page, limit, income_type):

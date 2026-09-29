@@ -97,6 +97,19 @@ class ExecutorTests(unittest.TestCase):
         self.assertEqual(self.journal.get("open_slot"), slot)
         self.assertEqual({item["orderType"] for item in exchange.algos}, {"STOP_MARKET", "TAKE_PROFIT_MARKET"})
 
+    def test_unknown_entry_with_nonterminal_order_is_not_marked_no_fill(self):
+        class PendingExchange(FakeExchange):
+            def query_order(self, symbol, client_id):
+                return {"status": "NEW", "executedQty": "0"}
+
+        exchange = PendingExchange(unknown=True)
+        executor = TradeExecutor(exchange, self.journal)
+        slot = "live:v1:BTCUSDT:100:e"
+        self.assertEqual(executor.enter(slot, "BTCUSDT", self.plan), "UNKNOWN")
+        self.assertEqual(self.journal.intent(slot)["status"], "UNKNOWN")
+        exchange.quantity = self.plan.quantity
+        self.assertEqual(executor.recover(), "PROTECTED")
+
     def test_failed_position_query_after_fill_attempts_emergency_exit(self):
         exchange = FakeExchange()
         executor = TradeExecutor(exchange, self.journal)
@@ -160,6 +173,102 @@ class ExecutorTests(unittest.TestCase):
         self.journal.begin_intent(slot, "jv-entry", "BTCUSDT", "LONG", "0.01", "49500", "51000")
         self.assertEqual(TradeExecutor(exchange, self.journal).exit(slot, "BTCUSDT"), "CLOSED")
         self.assertEqual(exchange.calls, ["reduce_ioc"])
+
+    def test_partial_ioc_exit_retries_residual_with_new_client_id(self):
+        class PartialExitExchange(FakeExchange):
+            def __init__(self):
+                super().__init__()
+                self.orders = {}
+                self.exit_quantities = []
+                self.exit_ids = []
+
+            def get_rules(self, symbol):
+                return SymbolRules(symbol, D("0.1"), D("0.001"), D("0.001"), D("100"), market_step_size=D("0.01"))
+
+            def get_book(self, symbol):
+                return D("50000"), D("50001"), 0
+
+            def place_reduce_ioc(self, symbol, side, quantity, price, client_id):
+                self.exit_quantities.append(quantity)
+                self.exit_ids.append(client_id)
+                filled = D("0.001") if len(self.exit_ids) == 1 else quantity
+                self.quantity -= filled
+                self.orders[client_id] = {"status": "EXPIRED" if filled < quantity else "FILLED", "executedQty": str(filled)}
+                return self.orders[client_id]
+
+            def query_order(self, symbol, client_id):
+                return self.orders[client_id]
+
+        exchange = PartialExitExchange()
+        exchange.quantity = D("0.003")
+        slot = "live:v1:BTCUSDT:100:e"
+        self.journal.begin_intent(slot, "jv-entry", "BTCUSDT", "LONG", "0.003", "49500", "51000")
+        executor = TradeExecutor(exchange, self.journal)
+        self.assertEqual(executor.exit(slot, "BTCUSDT"), "EXITING")
+        path = self.journal.path
+        self.journal.close()
+        self.journal = Journal(path)
+        executor = TradeExecutor(exchange, self.journal)
+        self.assertEqual(executor.recover(), "PROTECTED")
+        self.assertEqual(self.journal.intent(slot)["status"], "EXITING")
+        self.assertEqual(executor.exit(slot, "BTCUSDT"), "CLOSED")
+        self.assertEqual(exchange.exit_quantities, [D("0.003"), D("0.002")])
+        self.assertEqual(len(set(exchange.exit_ids)), 2)
+        self.assertEqual(exchange.quantity, D("0"))
+
+    def test_terminal_exit_retries_are_bounded(self):
+        class UnfilledExitExchange(FakeExchange):
+            def __init__(self):
+                super().__init__()
+                self.exit_ids = []
+
+            def place_reduce_market(self, symbol, side, quantity, client_id):
+                self.exit_ids.append(client_id)
+                return {"status": "EXPIRED", "executedQty": "0"}
+
+            def query_order(self, symbol, client_id):
+                return {"status": "EXPIRED", "executedQty": "0"}
+
+        exchange = UnfilledExitExchange()
+        exchange.quantity = D("0.008")
+        slot = "live:v1:BTCUSDT:100:e"
+        self.journal.begin_intent(slot, "jv-entry", "BTCUSDT", "LONG", "0.008", "49500", "51000")
+        executor = TradeExecutor(exchange, self.journal)
+        self.assertEqual([executor.exit(slot, "BTCUSDT") for _ in range(4)],
+                         ["EXITING", "EXITING", "EXITING", "HALTED"])
+        self.assertEqual(len(set(exchange.exit_ids)), 3)
+        self.assertEqual(self.journal.get("halt_reason"), "exit_retry_exhausted")
+
+    def test_reported_full_exit_with_residual_waits_for_reconciliation(self):
+        exchange = FakeExchange()
+        exchange.quantity = D("0.008")
+        slot = "live:v1:BTCUSDT:100:e"
+        self.journal.begin_intent(slot, "jv-entry", "BTCUSDT", "LONG", "0.008", "49500", "51000")
+        self.journal.update_intent(slot, "EXITING")
+        self.journal.set(f"exit_client_id:{slot}", order_id(slot, "x"))
+        self.assertEqual(TradeExecutor(exchange, self.journal).exit(slot, "BTCUSDT"), "HALTED")
+        self.assertEqual(exchange.calls, [])
+        self.assertEqual(self.journal.get("halt_reason"), "exit_fill_position_mismatch")
+
+    def test_recovery_keeps_exit_state_for_residual_position(self):
+        exchange = FakeExchange()
+        exchange.quantity = D("0.008")
+        slot = "live:v1:BTCUSDT:100:e"
+        self.journal.begin_intent(slot, "jv-entry", "BTCUSDT", "LONG", "0.008", "49500", "51000")
+        self.journal.update_intent(slot, "EXITING")
+        self.journal.set("open_slot", slot)
+        self.journal.set(f"exit_client_id:{slot}", order_id(slot, "x"))
+        transitions = []
+        original = self.journal.update_intent
+
+        def record_transition(key, status):
+            transitions.append(status)
+            original(key, status)
+
+        self.journal.update_intent = record_transition
+        self.assertEqual(TradeExecutor(exchange, self.journal).recover(), "PROTECTED")
+        self.assertEqual(self.journal.intent(slot)["status"], "EXITING")
+        self.assertEqual(transitions, [])
 
     def test_persisted_ioc_exit_id_can_resume_before_order_submission(self):
         class OddFillExchange(FakeExchange):

@@ -44,6 +44,7 @@ class BinanceFutures:
         return str(value)
 
     def _request(self, method: str, path: str, params: dict | None = None, signed: bool = False) -> dict | list:
+        mutation = method in ("POST", "DELETE", "PUT")
         request_params = {key: self._render(value) for key, value in (params or {}).items() if value is not None}
         headers = {}
         if signed:
@@ -57,21 +58,22 @@ class BinanceFutures:
         try:
             response = self.http.request(method, self.base_url + path, params=request_params, headers=headers)
         except httpx.RequestError as exc:
-            error = UnknownOrderOutcome if method in ("POST", "DELETE", "PUT") else BinanceError
+            error = UnknownOrderOutcome if mutation else BinanceError
             raise error(f"Binance {method} transport failure") from exc
         if response.status_code >= 400:
-            if response.status_code in (502, 503, 504) and method in ("POST", "DELETE", "PUT"):
-                raise UnknownOrderOutcome(f"Binance {method} returned {response.status_code}")
             try:
                 payload = response.json()
                 code = payload.get("code", "unknown") if isinstance(payload, dict) else "unknown"
             except ValueError:
                 code = "unknown"
+            if mutation and (response.status_code >= 500 or response.status_code == 408 or code in (-1000, -1006, -1007)):
+                raise UnknownOrderOutcome(f"Binance {method} {path}: HTTP {response.status_code}, code {code}")
             raise BinanceError(f"Binance {method} {path}: HTTP {response.status_code}, code {code}")
         try:
             return response.json()
         except ValueError as exc:
-            raise BinanceError(f"Binance {method} {path}: invalid JSON") from exc
+            error = UnknownOrderOutcome if mutation else BinanceError
+            raise error(f"Binance {method} {path}: invalid JSON") from exc
 
     def server_time(self) -> int:
         return int(self._request("GET", "/fapi/v1/time")["serverTime"])

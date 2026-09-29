@@ -8,6 +8,11 @@ from .domain import EntryPlan, decimal_text, round_down, round_up
 from .store import Journal
 
 
+ZERO_FILL_TERMINAL_STATUSES = {"EXPIRED", "EXPIRED_IN_MATCH", "CANCELED", "REJECTED"}
+EXIT_TERMINAL_STATUSES = ZERO_FILL_TERMINAL_STATUSES | {"FILLED"}
+MAX_EXIT_ATTEMPTS = 3
+
+
 def order_id(slot_key: str, stage: str) -> str:
     return "jv" + stage + hashlib.sha256(slot_key.encode()).hexdigest()[:28]
 
@@ -55,14 +60,17 @@ class TradeExecutor:
         position = self.current_position()
         if position is None or position["symbol"] != symbol:
             return False
-        self.journal.update_intent(slot, "PROTECTING")
+        exiting = intent["status"] == "EXITING"
+        if not exiting:
+            self.journal.update_intent(slot, "PROTECTING")
         exit_side = "SELL" if _amount(position) > 0 else "BUY"
         stop_id, take_id = self._owned_algo_ids(slot)
         if not self._ensure_algo(symbol, exit_side, "STOP_MARKET", Decimal(intent["stop_price"]), stop_id):
             return False
         if not self._ensure_algo(symbol, exit_side, "TAKE_PROFIT_MARKET", Decimal(intent["take_price"]), take_id):
             return False
-        self.journal.update_intent(slot, "PROTECTED")
+        if not exiting:
+            self.journal.update_intent(slot, "PROTECTED")
         self.journal.set("open_slot", slot)
         self.journal.event("protected", {"symbol": symbol, "slot": slot, "stop_id": stop_id, "take_id": take_id})
         return True
@@ -101,6 +109,10 @@ class TradeExecutor:
             if Decimal(str(order.get("executedQty", "0"))) > 0:
                 self.journal.halt("fill_position_mismatch")
                 return "HALTED"
+            if order.get("status") not in ZERO_FILL_TERMINAL_STATUSES:
+                self.journal.update_intent(slot_key, "UNKNOWN")
+                self.journal.halt("unresolved_entry_outcome")
+                return "UNKNOWN"
             self.journal.update_intent(slot_key, "NO_FILL")
             return "NO_FILL"
         if position["symbol"] != symbol or (_amount(position) > 0) != (plan.side == "LONG"):
@@ -152,13 +164,21 @@ class TradeExecutor:
             quantity = abs(_amount(position))
             exit_id_key = f"exit_client_id:{slot_key}"
             exit_id = self.journal.get(exit_id_key)
-            use_limit = exit_id == order_id(slot_key, "l")
-            rules = self.exchange.get_rules(symbol) if (not exit_id or use_limit) and hasattr(self.exchange, "get_rules") else None
+            rules = None
+            attempt = next((number for number in range(MAX_EXIT_ATTEMPTS)
+                            if exit_id in (order_id(slot_key, f"x{number or ''}"),
+                                           order_id(slot_key, f"l{number or ''}"))), None)
+            if exit_id and attempt is None:
+                self.journal.halt("unknown_exit_client_id")
+                return "HALTED"
+            use_limit = bool(exit_id and exit_id == order_id(slot_key, f"l{attempt or ''}"))
             if not exit_id:
+                rules = self.exchange.get_rules(symbol) if hasattr(self.exchange, "get_rules") else None
                 market_step = rules.market_step_size if rules else None
                 use_limit = bool(market_step and quantity % market_step != 0)
                 exit_id = order_id(slot_key, "l" if use_limit else "x")
                 self.journal.set(exit_id_key, exit_id)
+                attempt = 0
             intent = self.journal.intent(slot_key)
             if intent and intent["status"] == "EXITING":
                 try:
@@ -166,13 +186,28 @@ class TradeExecutor:
                 except BinanceError:
                     self.journal.halt("unknown_exit_outcome")
                     return "UNKNOWN"
-                if previous.get("status") not in ("FILLED", "EXPIRED", "CANCELED"):
+                if previous.get("status") not in EXIT_TERMINAL_STATUSES:
                     self.journal.halt("exit_still_pending")
                     return "UNKNOWN"
-                self.journal.halt("exit_position_remains")
-                return "HALTED"
-            if self.journal.intent(slot_key):
+                if previous.get("status") == "FILLED":
+                    self.journal.halt("exit_fill_position_mismatch")
+                    return "HALTED"
+                if attempt + 1 >= MAX_EXIT_ATTEMPTS:
+                    self.journal.halt("exit_retry_exhausted")
+                    return "HALTED"
+                rules = self.exchange.get_rules(symbol) if hasattr(self.exchange, "get_rules") else None
+                market_step = rules.market_step_size if rules else None
+                use_limit = bool(market_step and quantity % market_step != 0)
+                stage = ("l" if use_limit else "x") + str(attempt + 1)
+                exit_id = order_id(slot_key, stage)
+                self.journal.set(exit_id_key, exit_id)
+            elif intent:
                 self.journal.update_intent(slot_key, "EXITING")
+            if use_limit and rules is None:
+                rules = self.exchange.get_rules(symbol) if hasattr(self.exchange, "get_rules") else None
+                if rules is None:
+                    self.journal.halt("exit_rules_unavailable")
+                    return "HALTED"
             side = "SELL" if _amount(position) > 0 else "BUY"
             try:
                 if use_limit:
@@ -190,9 +225,12 @@ class TradeExecutor:
             except BinanceError:
                 self.journal.halt("exit_rejected")
                 return "HALTED"
-        if self.current_position() is not None:
-            self.journal.halt("exit_position_remains")
-            return "HALTED"
+        remaining = self.current_position()
+        if remaining is not None:
+            if remaining["symbol"] != symbol or (position is not None and (_amount(remaining) > 0) != (_amount(position) > 0)):
+                self.journal.halt("exit_position_mismatch")
+                return "HALTED"
+            return "EXITING"
         stop_id, take_id = self._owned_algo_ids(slot_key)
         for client_id in (stop_id, take_id):
             if self._algo_present(symbol, client_id):
@@ -222,6 +260,11 @@ class TradeExecutor:
                     return "HALTED"
             pending = self.journal.pending_intents()
             for intent in pending:
+                if intent["status"] == "EXITING":
+                    if self.exit(intent["slot_key"], intent["symbol"]) != "CLOSED":
+                        self.journal.halt("flat_cleanup_unresolved")
+                        return "HALTED"
+                    continue
                 if intent["status"] in ("UNKNOWN", "INTENT", "ENTERING"):
                     try:
                         order = self.exchange.query_order(intent["symbol"], intent["client_id"])
@@ -230,6 +273,9 @@ class TradeExecutor:
                         return "HALTED"
                     if Decimal(str(order.get("executedQty", "0"))) > 0:
                         self.journal.halt("recovery_fill_position_mismatch")
+                        return "HALTED"
+                    if order.get("status") not in ZERO_FILL_TERMINAL_STATUSES:
+                        self.journal.halt("unresolved_entry_at_recovery")
                         return "HALTED"
                 self.journal.update_intent(intent["slot_key"], "NO_FILL")
             for symbol in self.symbols:
