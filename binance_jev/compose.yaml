@@ -1,0 +1,24 @@
+services:
+  jevbot:
+    build: .
+    restart: unless-stopped
+    init: true
+    env_file: .env
+    environment:
+      JEVBOT_DB_PATH: /data/${JEVBOT_MODE:-paper}.db
+      JEVBOT_DASHBOARD_HOST: 0.0.0.0
+    volumes:
+      - jevbot_data:/data
+    ports:
+      - "127.0.0.1:8765:8765"
+    healthcheck:
+      test: ["CMD", "python", "-m", "jevbot", "health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  jevbot_data:

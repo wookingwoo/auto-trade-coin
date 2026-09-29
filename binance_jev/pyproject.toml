@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=70"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "binance-jev-bot"
+version = "0.1.0"
+description = "JEV decision engine for Binance USD-M futures with persistent risk controls"
+requires-python = ">=3.11"
+dependencies = [
+  "httpx>=0.27,<1",
+  "python-dotenv>=1.0,<2",
+  "typesafe-sdk==0.7.1",
+]
+
+[tool.setuptools.packages.find]
+include = ["jevbot*"]
